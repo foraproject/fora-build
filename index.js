@@ -1,20 +1,20 @@
-require();
+co = require('co');
+Configuration = require('./configuration');
 
-configuration = {
-    _files: [],
-    files: function(paths, handler) {
-        this._files.push({ paths: paths, handler: handler });
-    }
-}
+configs = [];
     
-configure = function(fn) {
+configure = function(fn, root) {
+    configuration = new Configuration(root);    
+    configs.push(configuration);        
     fn(configuration);
 }    
 
 run = function() {
-    configure.files.forEach(function(files) {
-        
-    });
+    co(function*() {
+        for (i = 0; i < configs.length; i++) {
+            yield configs[i].run();
+        }
+    })();
 }
 
 module.exports = {
