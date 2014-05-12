@@ -8,8 +8,13 @@
         "url": "https://github.com/jeswin/fora-build.git"
     },
     "dependencies": {
+        "co": "*",
+        "thunkify": "*"
     },
-    "devDependencies": {},
+    "devDependencies": {
+        "mocha": "*",
+        "should": "*"
+    },
     "engines": { "node": ">= 0.11.9" },
     "keywords": ["build"],
     "license" : "GPL-3.0+"
