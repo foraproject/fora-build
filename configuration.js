@@ -2,35 +2,35 @@
     "use strict";
     
     var Task = require('./task'),
-        WatchTask = require('./watchtask'),
-        DependencyGraph = require('./dependencygraph');
+        Watch = require('./watch'),
+        TaskRunner = require('./taskrunner');
 
     var Configuration = function(root, build) {
         this.root = root;
         this.build = build;
-        this.startHandlers = [];
-        this.completionHandlers = [];
-        this.watchHandlers = [];    
+        this.startTasks = [];
+        this.completionTasks = [];
+        this.watchTasks = [];    
     }
 
 
     Configuration.prototype.onStart = function(handler, name, deps) {        
         var task = new Task(handler, name, deps);
-        this.startHandlers.push(task);
+        this.startTasks.push(task);
         return task;
     }
 
 
     Configuration.prototype.onComplete = function(handler, name, deps) {
         var task = new Task(handler, name, deps);
-        this.completionHandlers.push(task);
+        this.completionTasks.push(task);
         return task;
     }
 
 
     Configuration.prototype.watch = function(patterns, handler, name, deps) {
-        var task = new WatchTask(patterns, handler, name, deps);
-        this.watchHandlers.push(task);
+        var task = new Watch(patterns, handler, name, deps);
+        this.watchTasks.push(task);
         return task;
     }
 
@@ -41,14 +41,14 @@
         
         process.chdir(this.root);
         
-        var startTasks = new DependencyGraph(this.startHandlers, this.build);
-        yield startTasks.run();
+        var startRunner = new TaskRunner(this.startTasks, this.build);
+        yield startRunner.run();
         
-        var watchTasks = new DependencyGraph(this.watchHandlers, this.build);
-        yield watchTasks.run();
+        var completionRunner = new TaskRunner(this.watchTasks, this.build);
+        yield completionRunner.run();
 
-        var completionTasks = new DependencyGraph(this.completionHandlers, this.build);
-        yield completionTasks.run();
+        var completionRunner = new TaskRunner(this.completionTasks, this.build);
+        yield completionRunner.run();
         
         process.chdir(this.build.dir);
     };

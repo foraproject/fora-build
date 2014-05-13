@@ -28,7 +28,7 @@
 
     var Task = require('./task');
 
-    var WatchTask = function(patterns, handler, name, deps) {
+    var Watch = function(patterns, handler, name, deps) {
         Task.call(this, handler, name, deps);
         this.patterns = [];
         
@@ -52,11 +52,11 @@
         }, this);             
     };
     
-    WatchTask.prototype = Object.create(Task.prototype);
+    Watch.prototype = Object.create(Task.prototype);
 
-    WatchTask.prototype.constructor = WatchTask;
+    Watch.prototype.constructor = Watch;
     
-    WatchTask.prototype.getTaskGroup = function*() {
+    Watch.prototype.getHandlers = function*() {
         var self = this;
         
         var fileWalkers = []        
@@ -75,15 +75,11 @@
                 }        
             });
         });
-
-        return { 
-            name: self.name,
-            deps: self.deps,
-            handlers: yieldables
-        };
+        
+        return yieldables;
     };        
     
-    module.exports = WatchTask;
+    module.exports = Watch;
 }());
 
 

@@ -2,12 +2,12 @@
     co = require('co');
     var Task = require('./task'),
         Configuration = require('./configuration'),
-        DependencyGraph = require('./dependencygraph');
+        TaskRunner = require('./taskrunner');
 
     BuildInstance = function(options) {
         this.configs = [];
-        this.startHandlers = [];
-        this.completionHandlers = [];    
+        this.startTasks = [];
+        this.completionTasks = [];    
         this.dir = process.cwd();
 
         this.options = options || {};
@@ -24,14 +24,14 @@
 
     BuildInstance.prototype.onStart = function(handler, name, deps) {        
         var task = new Task(handler, name, deps);
-        this.startHandlers.push(task);
+        this.startTasks.push(task);
         return task;
     }
 
 
     BuildInstance.prototype.onComplete = function(handler, name, deps) {
         var task = new Task(handler, name, deps);
-        this.completionHandlers.push(task);
+        this.completionTasks.push(task);
         return task;
     }
     
@@ -41,14 +41,14 @@
         
         co(function*() {
         
-            startTasks = new DependencyGraph(this.startHandlers, this);
+            startTasks = new TaskRunner(this.startTasks, this);
             yield startTasks.run();
 
             for (i = 0; i < this.configs.length; i++) {
                 yield this.configs[i].run(watch);
             } 
             
-            completionTasks = new DependencyGraph(this.completionHandlers, this);
+            completionTasks = new TaskRunner(this.completionTasks, this);
             yield completionTasks.run();
             
             if (cb) cb();
