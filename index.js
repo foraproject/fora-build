@@ -11,7 +11,7 @@
         this.dir = process.cwd();
 
         this.options = options || {};
-        this.options.parallel = this.options.parallel || 1;
+        this.options.threads = this.options.threads || 4;
     }
 
 
