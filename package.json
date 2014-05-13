@@ -16,7 +16,7 @@
         "should": "*"
     },
     "engines": { "node": ">= 0.11.9" },
-    "keywords": ["build"],
+    "keywords": ["build", "tasks"],
     "license" : "GPL-3.0+"
 }
 

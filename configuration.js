@@ -1,70 +1,37 @@
 (function () {
     "use strict";
-
-    var fs = require('fs'),
-        path = require('path'),
-        thunkify = require('thunkify'),
-        readdir = thunkify(fs.readdir),
-        stat = thunkify(fs.stat);
-
-    var walk = function*(dir, recurse) {
-        var results = [];
-        
-        var files = yield readdir(dir);
-        for (var i = 0; i < files.length; i++) {
-            var fullPath = path.join(dir, files[i]);
-            var info = yield stat(fullPath);
-            if (info.isDirectory()) {
-                results.push({ path: fullPath, type: 'dir' });
-                if (recurse) {
-                    results = results.concat(yield walk(fullPath, recurse));
-                }
-            } else {
-                results.push({ path: fullPath, type: 'file' });
-            }
-        }
-        return results;
-    }
-
+    
+    var Task = require('./task'),
+        WatchTask = require('./watchtask'),
+        DependencyGraph = require('./dependencygraph');
 
     var Configuration = function(root, build) {
         this.root = root;
         this.build = build;
         this.startHandlers = [];
         this.completionHandlers = [];
-        this.filePatterns = [];    
+        this.watchHandlers = [];    
     }
 
 
-    Configuration.prototype.onStart = function(handler) {
-        this.startHandlers.push(handler);
-        return handler;
-    }
-
-    Configuration.prototype.onComplete = function(handler) {
-        this.completionHandlers.push(handler);
-        return handler;
+    Configuration.prototype.onStart = function(handler, name, deps) {        
+        var task = new Task(handler, name, deps);
+        this.startHandlers.push(task);
+        return task;
     }
 
 
-    Configuration.prototype.files = function(patterns, handler) {
-        patterns.forEach(function(pattern) {
-            if (typeof pattern == "string") {
-                var parts = pattern.split('/');
-                pattern = {};
-                pattern.file = parts.pop();
-                pattern.dir = parts.length ? parts.join("/") : ".";       
-            }
+    Configuration.prototype.onComplete = function(handler, name, deps) {
+        var task = new Task(handler, name, deps);
+        this.completionHandlers.push(task);
+        return task;
+    }
 
-            if (!pattern.recurse)
-                pattern.recurse = true;
 
-            if (!pattern.regex)
-                pattern.regex = new RegExp("^" + pattern.dir.replace(/\//g, "\\/") + "\\/(.*\\/)?" + (pattern.file.replace(".", "\\.").replace("*", ".*") + "$"));
-
-            pattern.handler = handler;
-            this.filePatterns.push(pattern);
-        }, this);
+    Configuration.prototype.watch = function(patterns, handler, name, deps) {
+        var task = new WatchTask(patterns, handler, name, deps);
+        this.watchHandlers.push(task);
+        return task;
     }
 
 
@@ -74,33 +41,17 @@
         
         process.chdir(this.root);
         
-        for (var i = 0; i < this.startHandlers.length; i++) {
-            yield this.startHandlers[i](this);
-        }    
+        var startTasks = new DependencyGraph(this.startHandlers, this.build);
+        yield startTasks.run();
         
-        for (i = 0; i < this.filePatterns.length; i++) {
-            var pattern = this.filePatterns[i];
-            var files = yield walk(pattern.dir, pattern.recurse);        
-            var yieldables = [];
-            for(var j = 0; j < files.length; j++) {
-                var last = j === (files.length - 1);
-                if (files[j].type === 'file' && pattern.regex.test(files[j].path)) {
-                    yieldables.push(pattern.handler.call(this, files[j].path));
-                }
-                if (last || (yieldables.length === this.build.options.parallel)) {
-                    yield yieldables;
-                    yieldables = [];
-                }
-            }        
-        }
+        var watchTasks = new DependencyGraph(this.watchHandlers, this.build);
+        yield watchTasks.run();
 
-        for (i = 0; i < this.completionHandlers.length; i++) {
-            yield this.completionHandlers[i](this);
-        }  
-            
+        var completionTasks = new DependencyGraph(this.completionHandlers, this.build);
+        yield completionTasks.run();
+        
         process.chdir(this.build.dir);
     };
-
 
     module.exports = Configuration;
 }());

@@ -1,6 +1,8 @@
 (function () {
     co = require('co');
-    Configuration = require('./configuration');
+    var Task = require('./task'),
+        Configuration = require('./configuration'),
+        DependencyGraph = require('./dependencygraph');
 
     BuildInstance = function(options) {
         this.configs = [];
@@ -12,15 +14,6 @@
         this.options.parallel = this.options.parallel || 1;
     }
 
-    BuildInstance.prototype.onStart = function(handler) {
-        this.startHandlers.push(handler);
-        return handler;
-    }
-
-    BuildInstance.prototype.onComplete = function(handler) {
-        this.completionHandlers.push(handler);
-        return handler;
-    }
 
     BuildInstance.prototype.configure = function(fn, root) {
         configuration = new Configuration(root, this);    
@@ -28,22 +21,35 @@
         fn(configuration);
     }
 
+
+    BuildInstance.prototype.onStart = function(handler, name, deps) {        
+        var task = new Task(handler, name, deps);
+        this.startHandlers.push(task);
+        return task;
+    }
+
+
+    BuildInstance.prototype.onComplete = function(handler, name, deps) {
+        var task = new Task(handler, name, deps);
+        this.completionHandlers.push(task);
+        return task;
+    }
+    
+    
     BuildInstance.prototype.run = function(watch, cb) {
         this.state = {};
         
         co(function*() {
-            for (var i = 0; i < this.startHandlers.length; i++) {
-                yield this.startHandlers[i](this);
-            }        
         
+            startTasks = new DependencyGraph(this.startHandlers, this);
+            yield startTasks.run();
+
             for (i = 0; i < this.configs.length; i++) {
                 yield this.configs[i].run(watch);
-            }
-
-
-            for (var i = 0; i < this.completionHandlers.length; i++) {
-                yield this.completionHandlers[i](this);
-            }        
+            } 
+            
+            completionTasks = new DependencyGraph(this.completionHandlers, this);
+            yield completionTasks.run();
             
             if (cb) cb();
             

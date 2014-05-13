@@ -5,10 +5,10 @@ co = require("co");
 describe('build.run()', function() {
 
     describe('when executed', function(){
-        it('should run all configurations without throwing an exception', function(){
+        it('should run all configurations without throwing an exception', function(done){
             build = foraBuild.create();            
             build.configure(config, 'data');
-            build.run();
+            build.run(true, done);
         });
     });
 

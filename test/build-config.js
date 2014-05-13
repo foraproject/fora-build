@@ -23,14 +23,18 @@ module.exports = function(config) {
         yield exec("rm app -rf");
         yield exec("mkdir app");
         console.log("done");
-    });
+    }, "on_start");
 
 
     /*
         Print the file name in the console.
     */
-    config.files(["*.txt"], function*(filePath) {
+    config.watch(["*.txt"], function*(filePath) {
         console.log(filePath);
-    });
+    }, "print_text_file");
+
+    config.watch(["*.html"], function*(filePath) {
+        console.log(filePath);
+    }, "print_html_file");    
 }
 
