@@ -2,14 +2,14 @@
     co = require('co');
     thunkify = require('thunkify');
 
-    var Task = require('./task'),
+    var Job = require('./job'),
         Configuration = require('./configuration'),
-        TaskRunner = require('./taskrunner');
+        JobRunner = require('./jobrunner');
 
     BuildInstance = function(options) {
         this.configs = [];
-        this.buildStartTasks = [];
-        this.buildCompleteTasks = [];    
+        this.buildStartJobs = [];
+        this.buildCompleteJobs = [];    
         this.dir = process.cwd();
 
         this.options = options || {};
@@ -25,36 +25,36 @@
     }
 
 
-    BuildInstance.prototype.onBuildStart = function(handler, name, deps) {        
-        var task = new Task(handler, name, deps, this);
-        this.buildStartTasks.push(task);
-        return task;
+    BuildInstance.prototype.onBuildStart = function(fn, name, deps) {        
+        var job = new Job(fn, name, deps, this);
+        this.buildStartJobs.push(job);
+        return job;
     }
 
 
-    BuildInstance.prototype.onBuildComplete = function(handler, name, deps) {
-        var task = new Task(handler, name, deps, this);
-        this.buildCompleteTasks.push(task);
-        return task;
+    BuildInstance.prototype.onBuildComplete = function(fn, name, deps) {
+        var job = new Job(fn, name, deps, this);
+        this.buildCompleteJobs.push(job);
+        return job;
     }
     
     
     BuildInstance.prototype.start = function(monitor, cb) {
         this.state = {};
-        this.taskQueue = [];
+        this.jobQueue = [];
         this.monitor = monitor;
         
         co(function*() {
             var options = { threads: this.options.threads };        
         
-            var startRunner = new TaskRunner(this.buildStartTasks, options);
+            var startRunner = new JobRunner(this.buildStartJobs, options);
             yield startRunner.run();
 
             for (i = 0; i < this.configs.length; i++) {
-                yield this.configs[i].start();
+                yield this.configs[i].startBuild();
             } 
             
-            var completionRunner = new TaskRunner(this.buildCompleteTasks, options);
+            var completionRunner = new JobRunner(this.buildCompleteJobs, options);
             yield completionRunner.run();
             
             if (cb) cb();

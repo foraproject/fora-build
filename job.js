@@ -1,8 +1,8 @@
 (function () {
     "use strict";
     
-    var Task = function(handler, name, deps, parent, options) {
-        this.handler = handler;
+    var Task = function(fn, name, deps, parent, options) {
+        this.fn = fn;
         this.name = name || "undefined";
         this.deps = deps || [];
         this.parent = parent;
@@ -10,9 +10,9 @@
     }
 
 
-    Task.prototype.getInvokables = function*() {
+    Task.prototype.getTasks = function*() {
         var self = this;
-        return [function*() { yield self.handler.call(self.parent); }];
+        return [function*() { yield self.fn.call(self.parent); }];
     }
     
     module.exports = Task;

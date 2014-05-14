@@ -8,10 +8,10 @@
         stat = thunkify(fs.stat);
 
 
-    var Task = require('./task');
+    var Job = require('./job');
 
-    var Watch = function(patterns, handler, name, deps, parent, options) {
-        Task.call(this, handler, name, deps, parent, options);
+    var Watch = function(patterns, fn, name, deps, parent, options) {
+        Job.call(this, fn, name, deps, parent, options);
         this.patterns = [];
         
         this.watchedFiles = [];                
@@ -40,11 +40,11 @@
         }, this);             
     };
     
-    Watch.prototype = Object.create(Task.prototype);
+    Watch.prototype = Object.create(Job.prototype);
 
     Watch.prototype.constructor = Watch;
     
-    Watch.prototype.getInvokables = function*() {
+    Watch.prototype.getTasks = function*() {
 
         var walk = function*(dir, recurse, pattern) {
             var results = [];
@@ -79,7 +79,7 @@
             files.forEach(function(file) {
                 if (file.type === 'file' && file.pattern.regex.test(file.path)) {                    
                     yieldables.push(function*() {
-                        yield self.handler.call(self.parent, file.path, "change");
+                        yield self.fn.call(self.parent, file.path, "change");
                     });
                     self.watchedFiles.push(file.path);
                 }

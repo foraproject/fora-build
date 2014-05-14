@@ -1,77 +1,86 @@
 (function () {
     "use strict";
     
-    var Task = require('./task'),
+    var Job = require('./job'),
         Watch = require('./watch'),
-        TaskRunner = require('./taskrunner');
+        JobRunner = require('./jobrunner');
 
     var Configuration = function(root, build) {
         this.root = root;
         this.build = build;
 
-        this.tasks = [];
-        this.buildStartTasks = [];
-        this.buildCompleteTasks = [];
-        this.watchTasks = [];
-        this.queuedTasks = [];
+        this.jobs = [];
+        this.buildStartJobs = [];
+        this.buildCompleteJobs = [];
+        this.watchJobs = [];
+        this.queuedJobs = [];
     }
 
-    Configuration.prototype.task = function(handler, name, deps) {        
-        var task = new Task(handler, name, deps, this, {});
-        this.tasks.push(task);
-        return task;
-    }
-
-
-    Configuration.prototype.onBuildStart = function(handler, name, deps) {        
-        var task = new Task(handler, name, deps, this, {});
-        this.buildStartTasks.push(task);
-        return task;
+    Configuration.prototype.job = function(fn, name, deps) {        
+        var job = new Job(fn, name, deps, this, {});
+        this.jobs.push(job);
+        return job;
     }
 
 
-    Configuration.prototype.onBuildComplete = function(handler, name, deps) {
-        var task = new Task(handler, name, deps, this, {});
-        this.buildCompleteTasks.push(task);
-        return task;
+    Configuration.prototype.onBuildStart = function(fn, name, deps) {        
+        var job = new Job(fn, name, deps, this, {});
+        this.buildStartJobs.push(job);
+        return job;
     }
 
 
-    Configuration.prototype.watch = function(patterns, handler, name, deps) {
-        var task = new Watch(patterns, handler, name, deps, this, {});
-        this.watchTasks.push(task);
-        return task;
+    Configuration.prototype.onBuildComplete = function(fn, name, deps) {
+        var job = new Job(fn, name, deps, this, {});
+        this.buildCompleteJobs.push(job);
+        return job;
     }
-    
-    
-    Configuration.prototype.queue = function(handler) {
-        this.queuedTasks.push(handler);
+
+
+    Configuration.prototype.watch = function(patterns, fn, name, deps) {
+        var job = new Watch(patterns, fn, name, deps, this, {});
+        this.watchJobs.push(job);
+        return job;
     }
     
     
-    Configuration.prototype.run = function*(handler, name, deps, parent, options) {
-        var runner = new TaskRunner(this.tasks, { threads: this.build.options.threads });        
-        yield runner.run(handler, name, deps, parent, options);
+    Configuration.prototype.queue = function(fn) {
+        var matches = this.queuedJobs.filter(function(f) {
+            return f.fn === fn;
+        });
+        if (!matches.length)
+            this.queuedJobs.push({ fn: fn });
+    }
+    
+    
+    Configuration.prototype.run = function*(fn, name, deps, parent, options) {
+        var runner = new JobRunner(this.jobs, { threads: this.build.options.threads });        
+        yield runner.run(fn, name, deps, parent, options);
     }
     
 
-    Configuration.prototype.start = function*() {
+    Configuration.prototype.startBuild = function*() {
         this.GLOBAL = this.build.state;
         this.state = {};
+        this.queuedJobs = [];
         
         process.chdir(this.root);
         
         var options = { threads: this.build.options.threads };
         
-        var startRunner = new TaskRunner(this.buildStartTasks, options);
+        var startRunner = new JobRunner(this.buildStartJobs, options);
         yield startRunner.run();
         
-        var watchRunner = new TaskRunner(this.watchTasks, options);
+        var watchRunner = new JobRunner(this.watchJobs, options);
         yield watchRunner.run();
 
-        var completionRunner = new TaskRunner(this.buildCompleteTasks, options);
+        var completionRunner = new JobRunner(this.buildCompleteJobs, options);
         yield completionRunner.run();
 
+        for(var i = 0; i < this.queuedJobs.length; i++) {
+            yield this.run(this.queuedJobs[i].fn);
+        }
+        
         process.chdir(this.build.dir);
     };
 
