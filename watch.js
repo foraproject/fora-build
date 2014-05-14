@@ -89,16 +89,6 @@
         return yieldables;
     };        
     
-    
-    Watch.prototype.clearWatches = function() {
-        
-    }
-    
-
-    Watch.prototype.startWatching = function() {
-                
-    }
-
     module.exports = Watch;
 }());
 

@@ -58,9 +58,37 @@
             yield completionRunner.run();
             
             if (cb) cb();
+
+            if (monitor)
+                yield this.startMonitoring();
                         
         }).call(this);
     }
+
+
+    var sleep = function(ms) {
+        return function (cb) {
+            setTimeout(cb, ms);
+        };
+    }
+                
+    
+    BuildInstance.prototype.startMonitoring = function*() {
+        while(true) {
+            for (i = 0; i < this.configs.length; i++) {
+                var config = this.configs[i]; 
+                process.chdir(config.root);
+                while(config.fileChangeEvents.length) {
+                    var funcInfo = config.fileChangeEvents.shift();
+                    yield funcInfo.fn.call(config, funcInfo.filename, "change");
+                }
+                yield config.runQueuedJobs();
+                process.chdir(this.dir);
+                yield sleep(1000);
+            }
+        }          
+    }
+    
     
     
     module.exports = {

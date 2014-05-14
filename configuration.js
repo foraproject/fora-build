@@ -14,6 +14,8 @@
         this.buildCompleteJobs = [];
         this.watchJobs = [];
         this.queuedJobs = [];
+
+        this.fileChangeEvents = [];
     }
 
     Configuration.prototype.job = function(fn, name, deps) {        
@@ -51,11 +53,20 @@
         if (!matches.length)
             this.queuedJobs.push({ fn: fn });
     }
-    
+
     
     Configuration.prototype.run = function*(fn, name, deps, parent, options) {
         var runner = new JobRunner(this.jobs, { threads: this.build.options.threads });        
         yield runner.run(fn, name, deps, parent, options);
+    }
+    
+    
+    Configuration.prototype.runQueuedJobs = function*() {
+        while (this.queuedJobs.length) {
+            var job  = this.queuedJobs.shift();
+            var runner = new JobRunner(this.jobs, { threads: this.build.options.threads });
+            yield runner.run(job.fn);
+        }
     }
     
 
@@ -73,21 +84,27 @@
         
         var watchRunner = new JobRunner(this.watchJobs, options);
         yield watchRunner.run();
-
+        
         var completionRunner = new JobRunner(this.buildCompleteJobs, options);
         yield completionRunner.run();
 
-        for(var i = 0; i < this.queuedJobs.length; i++) {
-            yield this.run(this.queuedJobs[i].fn);
+        yield this.runQueuedJobs();
+
+        if (this.build.monitor) {        
+            var self = this;
+            this.watchJobs.forEach(function(j) {
+                j.watchedFiles.forEach(function(f) {
+                    fs.watch(f, function(ev, filename) {
+                        var matches = self.fileChangeEvents.filter(function(c) { return c.filename === f; });
+                        if (!matches.length)
+                            self.fileChangeEvents.push({ fn: j.fn, filename: f});
+                    });              
+                });
+            });
         }
-        
+
         process.chdir(this.build.dir);
     };
-
-    
-    Configuration.prototype.monitor = function*() {
-        
-    }
 
     module.exports = Configuration;
 }());
