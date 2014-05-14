@@ -1,11 +1,12 @@
 (function () {
     "use strict";
     
-    var Task = function(handler, name, deps, parent) {
+    var Task = function(handler, name, deps, parent, options) {
         this.handler = handler;
         this.name = name || "undefined";
         this.deps = deps || [];
         this.parent = parent;
+        this.options = options;
     }
 
 

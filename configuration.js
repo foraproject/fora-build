@@ -17,27 +17,27 @@
 
 
     Configuration.prototype.onStart = function(handler, name, deps) {        
-        var task = new Task(handler, name, deps, this);
+        var task = new Task(handler, name, deps, this, {});
         this.startTasks.push(task);
         return task;
     }
 
 
     Configuration.prototype.onComplete = function(handler, name, deps) {
-        var task = new Task(handler, name, deps, this);
+        var task = new Task(handler, name, deps, this, {});
         this.completionTasks.push(task);
         return task;
     }
 
 
     Configuration.prototype.watch = function(patterns, handler, name, deps) {
-        var task = new Watch(patterns, handler, name, deps, this);
+        var task = new Watch(patterns, handler, name, deps, this, {});
         this.watchTasks.push(task);
         return task;
     }
 
 
-    Configuration.prototype.run = function*(watch) {
+    Configuration.prototype.run = function*() {
         this.GLOBAL = this.build.state;
         this.state = {};
         
@@ -54,6 +54,12 @@
         
         process.chdir(this.build.dir);
     };
+    
+    
+    Configuration.prototype.monitor = function() {
+        
+    };
+    
 
     module.exports = Configuration;
 }());

@@ -36,8 +36,9 @@
     }
     
     
-    BuildInstance.prototype.run = function(watch, cb) {
+    BuildInstance.prototype.run = function(monitor, cb) {
         this.state = {};
+        this.monitor = monitor;
         
         co(function*() {
         
@@ -45,7 +46,7 @@
             yield startRunner.run();
 
             for (i = 0; i < this.configs.length; i++) {
-                yield this.configs[i].run(watch);
+                yield this.configs[i].run();
             } 
             
             var completionRunner = new TaskRunner(this.completionTasks, this);

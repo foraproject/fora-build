@@ -10,8 +10,8 @@
 
     var Task = require('./task');
 
-    var Watch = function(patterns, handler, name, deps, parent) {
-        Task.call(this, handler, name, deps, parent);
+    var Watch = function(patterns, handler, name, deps, parent, options) {
+        Task.call(this, handler, name, deps, parent, options);
         this.patterns = [];
         
         patterns.forEach(function(pattern) {           
