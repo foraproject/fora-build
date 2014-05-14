@@ -49,9 +49,9 @@
     }
     
     
-    Configuration.prototype.run = function(handler, name, deps) {
+    Configuration.prototype.run = function*(handler, name, deps, parent, options) {
         var runner = new TaskRunner(this.tasks, { threads: this.build.options.threads });        
-        yield runner.run(handler, name, deps);
+        yield runner.run(handler, name, deps, parent, options);
     }
     
 

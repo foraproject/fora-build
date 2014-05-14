@@ -1,16 +1,39 @@
 (function () {
     "use strict";
-
+    
+    var Task = require('./task');
+    
     var TaskRunner = function(tasks, options) {
         this.tasks = tasks;
         this.options = options;
     };
 
     
-    TaskRunner.prototype.run = function*(handler, name, deps) {
-        if (this.hasRun)
-            throw new Error("This runner instance has already been run");           
-        this.hasRun = true;
+    /*
+        If a task is explicitly passed in, only that task and its dependencies will be started.
+        Otherwise all tasks available to run will start.
+    */
+    TaskRunner.prototype.run = function*(handler, name, deps, parent, options) {
+        var singleTask;
+        if (handler) {
+            autorun = false;
+            
+            if (typeof handler !== "string") {
+                singleTask = new Task(handler, name, deps, parent, options);
+            } else {
+                singleTask = this.tasks.filter(function(t) {
+                    return t.name === handler;
+                });
+                if (singleTask.length)
+                    singleTask = task[0];
+                else
+                    throw new Error("The task " + handler + " was not found");
+            }
+        }
+        
+        if (this.isRunning)
+            throw new Error("Cannot call TaskRunner.run while it is already in running state");           
+        this.isRunning = true;
         
         var self = this;
         var taskList = [];
@@ -34,7 +57,6 @@
                         return false; 
                     }
             }
-            
             return true;
         }
         
@@ -80,17 +102,48 @@
             return gens;
         }
 
-        //Ask all tasks to return work items (handlers) that need to be run
-        for (var i = 0; i < this.tasks.length; i++) {
-            taskList.push({
-                ref: this.tasks[i],    
-                completed: 0,
-                total: 0,
-            });
+        //In single task mode, build the list of dependencies
+        if (singleTask) {
+            addToTaskList = function(task, taskList) {
+                var matches = taskList.filter(function(t) {
+                    return t.name === task.name;
+                });
+                
+                if (!matches.length) {
+                    //task is not in the taskList already.
+                    //We must add it.
+                    taskList.push(task);
+                    
+                    //Also add dependencies for the task
+                    var deps = this.tasks.filter(function(t) {
+                        return task.deps.indexOf(t.name) > -1
+                    });
+                    //....recursively, of course.
+                    deps.forEach(function(dep) {
+                        addToTaskList(dep, taskList);
+                    });
+                }
+            }
+            
+            addToTaskList(singleTask, taskList);
+        }
+        //Otherwise, you can run everything
+        else {
+            //Ask all tasks to return work items (handlers) that need to be run
+            for (var i = 0; i < this.tasks.length; i++) {
+                taskList.push({
+                    ref: this.tasks[i],    
+                    completed: 0,
+                    total: 0,
+                });
+            }
         }
         
+        
         //Queue initial work items
-        yield scheduler();   
+        yield scheduler();
+        
+        this.isRunning = false;   
     }
     
     module.exports = TaskRunner;
