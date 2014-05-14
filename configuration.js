@@ -8,24 +8,31 @@
     var Configuration = function(root, build) {
         this.root = root;
         this.build = build;
-        this.startTasks = [];
-        this.completionTasks = [];
-        this.watchTasks = [];    
-        this.GLOBAL = this.build.state;
-        this.state = {};
+
+        this.tasks = [];
+        this.buildStartTasks = [];
+        this.buildCompleteTasks = [];
+        this.watchTasks = [];
+        this.queuedTasks = [];
     }
 
-
-    Configuration.prototype.onStart = function(handler, name, deps) {        
+    Configuration.prototype.task = function(handler, name, deps) {        
         var task = new Task(handler, name, deps, this, {});
-        this.startTasks.push(task);
+        this.tasks.push(task);
         return task;
     }
 
 
-    Configuration.prototype.onComplete = function(handler, name, deps) {
+    Configuration.prototype.onBuildStart = function(handler, name, deps) {        
         var task = new Task(handler, name, deps, this, {});
-        this.completionTasks.push(task);
+        this.buildStartTasks.push(task);
+        return task;
+    }
+
+
+    Configuration.prototype.onBuildComplete = function(handler, name, deps) {
+        var task = new Task(handler, name, deps, this, {});
+        this.buildCompleteTasks.push(task);
         return task;
     }
 
@@ -35,31 +42,43 @@
         this.watchTasks.push(task);
         return task;
     }
+    
+    
+    Configuration.prototype.queue = function(handler) {
+        this.queuedTasks.push(handler);
+    }
+    
+    
+    Configuration.prototype.run = function(handler, name, deps) {
+        var runner = new TaskRunner(this.tasks, { threads: this.build.options.threads });        
+        yield runner.run(handler, name, deps);
+    }
+    
 
-
-    Configuration.prototype.run = function*() {
+    Configuration.prototype.start = function*() {
         this.GLOBAL = this.build.state;
         this.state = {};
         
         process.chdir(this.root);
         
-        var startRunner = new TaskRunner(this.startTasks, this.build);
+        var options = { threads: this.build.options.threads };
+        
+        var startRunner = new TaskRunner(this.buildStartTasks, options);
         yield startRunner.run();
         
-        var watchRunner = new TaskRunner(this.watchTasks, this.build);
+        var watchRunner = new TaskRunner(this.watchTasks, options);
         yield watchRunner.run();
 
-        var completionRunner = new TaskRunner(this.completionTasks, this.build);
+        var completionRunner = new TaskRunner(this.buildCompleteTasks, options);
         yield completionRunner.run();
-        
+
         process.chdir(this.build.dir);
     };
+
     
-    
-    Configuration.prototype.monitor = function() {
+    Configuration.prototype.monitor = function*() {
         
-    };
-    
+    }
 
     module.exports = Configuration;
 }());

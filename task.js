@@ -10,7 +10,7 @@
     }
 
 
-    Task.prototype.getHandlers = function*() {
+    Task.prototype.getInvokables = function*() {
         var self = this;
         return [function*() { yield self.handler.call(self.parent); }];
     }

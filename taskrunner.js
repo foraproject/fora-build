@@ -1,36 +1,36 @@
 (function () {
     "use strict";
 
-    var TaskRunner = function(tasks, build) {
+    var TaskRunner = function(tasks, options) {
         this.tasks = tasks;
-        this.build = build;
+        this.options = options;
     };
 
     
-    TaskRunner.prototype.run = function*() {
+    TaskRunner.prototype.run = function*(handler, name, deps) {
         if (this.hasRun)
             throw new Error("This runner instance has already been run");           
         this.hasRun = true;
         
         var self = this;
-        var runnables = [];
+        var taskList = [];
         var activeThreads = 0;
         
         // Checks if all dependent tasks have completed.
         var isSignaled = function(runnable) {
             //Already done?
-            if (runnable.handlers && runnable.handlers.length === 0)
+            if (runnable.invokables && runnable.invokables.length === 0)
                 return false;
             
             //Not done yet.
             for (var i = 0; i < runnable.ref.deps.length; i++) {
-                var matches = runnables.filter(function(r) {
+                var matches = taskList.filter(function(r) {
                     return r.ref.name === runnable.ref.deps[i];
                 });
                 if (!matches.length)
                     throw new Error("Cannot find dependent task " + runnable.ref.deps[i] + " for task " + runnable.ref.name);
                 else 
-                    if ((typeof matches[0].handlers === "undefined") || (matches[0].total > matches[0].completed)) {
+                    if ((typeof matches[0].invokables === "undefined") || (matches[0].total > matches[0].completed)) {
                         return false; 
                     }
             }
@@ -40,21 +40,21 @@
         
         //Do the do.
         var next = function*() {
-            // Signal all runnables that can run
+            // Signal all taskList that can run
             var handler;
-            var signaled = runnables.filter(isSignaled);                
+            var signaled = taskList.filter(isSignaled);                
             for(var i = 0; i < signaled.length; i++) {
-                if (typeof(signaled[i].handlers) === "undefined" && !signaled[i].isStarting) {
+                if (typeof(signaled[i].invokables) === "undefined" && !signaled[i].isStarting) {
                     signaled[i].isStarting = true;
-                    signaled[i].handlers = yield signaled[i].ref.getHandlers();;
-                    signaled[i].total = signaled[i].handlers.length;
+                    signaled[i].invokables = yield signaled[i].ref.getInvokables();;
+                    signaled[i].total = signaled[i].invokables.length;
                     signaled[i].isStarting = false;
                 }                    
             }
 
             for(var i = 0; i < signaled.length; i++) {
-                if (signaled[i].handlers && signaled[i].handlers.length) {
-                    handler = signaled[i].handlers.shift();
+                if (signaled[i].invokables && signaled[i].invokables.length) {
+                    handler = signaled[i].invokables.shift();
                     var runnable = signaled[i];
                     break;
                 }
@@ -74,7 +74,7 @@
         // Create a number of parallel tasks, equal to unused threads.
         var scheduler = function() {
             var gens = [];
-            var threads = self.build.options.threads - activeThreads;
+            var threads = self.options.threads - activeThreads;
             if (threads > 0)
                 while (threads--) gens.push(next);
             return gens;
@@ -82,7 +82,7 @@
 
         //Ask all tasks to return work items (handlers) that need to be run
         for (var i = 0; i < this.tasks.length; i++) {
-            runnables.push({
+            taskList.push({
                 ref: this.tasks[i],    
                 completed: 0,
                 total: 0,

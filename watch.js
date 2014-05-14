@@ -14,6 +14,9 @@
         Task.call(this, handler, name, deps, parent, options);
         this.patterns = [];
         
+        this.watchedFiles = [];                
+        this.watchedDirs = [];
+        
         patterns.forEach(function(pattern) {           
             if (typeof pattern === "string") {
                 var result = {};
@@ -21,6 +24,8 @@
                 result.dir = path.dirname(pattern);
                 pattern = result;
             }
+            
+            this.watchedDirs.push(pattern.dir);
             
             if (!pattern.recurse)
                 pattern.recurse = true;
@@ -39,7 +44,7 @@
 
     Watch.prototype.constructor = Watch;
     
-    Watch.prototype.getHandlers = function*() {
+    Watch.prototype.getInvokables = function*() {
 
         var walk = function*(dir, recurse, pattern) {
             var results = [];
@@ -60,7 +65,6 @@
             return results;
         }
 
-        var self = this;
         
         var fileWalkers = []        
         
@@ -69,20 +73,32 @@
         }
         var filesList = yield fileWalkers;
 
+        var self = this;
         var yieldables = [];
         filesList.forEach(function(files) {
             files.forEach(function(file) {
                 if (file.type === 'file' && file.pattern.regex.test(file.path)) {                    
                     yieldables.push(function*() {
-                        yield self.handler.call(self.parent, file.path);
+                        yield self.handler.call(self.parent, file.path, "change");
                     });
-                }        
+                    self.watchedFiles.push(file.path);
+                }
             });
         });
         
         return yieldables;
     };        
     
+    
+    Watch.prototype.clearWatches = function() {
+        
+    }
+    
+
+    Watch.prototype.startWatching = function() {
+                
+    }
+
     module.exports = Watch;
 }());
 

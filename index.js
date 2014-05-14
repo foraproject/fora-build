@@ -1,13 +1,15 @@
 (function () {
     co = require('co');
+    thunkify = require('thunkify');
+
     var Task = require('./task'),
         Configuration = require('./configuration'),
         TaskRunner = require('./taskrunner');
 
     BuildInstance = function(options) {
         this.configs = [];
-        this.startTasks = [];
-        this.completionTasks = [];    
+        this.buildStartTasks = [];
+        this.buildCompleteTasks = [];    
         this.dir = process.cwd();
 
         this.options = options || {};
@@ -16,52 +18,54 @@
 
 
     BuildInstance.prototype.configure = function(fn, root) {
-        configuration = new Configuration(root, this);    
+        var configuration = new Configuration(root, this);    
         this.configs.push(configuration);        
         fn(configuration);
+        return configuration;
     }
 
 
-    BuildInstance.prototype.onStart = function(handler, name, deps) {        
+    BuildInstance.prototype.onBuildStart = function(handler, name, deps) {        
         var task = new Task(handler, name, deps, this);
-        this.startTasks.push(task);
+        this.buildStartTasks.push(task);
         return task;
     }
 
 
-    BuildInstance.prototype.onComplete = function(handler, name, deps) {
+    BuildInstance.prototype.onBuildComplete = function(handler, name, deps) {
         var task = new Task(handler, name, deps, this);
-        this.completionTasks.push(task);
+        this.buildCompleteTasks.push(task);
         return task;
     }
     
     
-    BuildInstance.prototype.run = function(monitor, cb) {
+    BuildInstance.prototype.start = function(monitor, cb) {
         this.state = {};
+        this.taskQueue = [];
         this.monitor = monitor;
         
         co(function*() {
+            var options = { threads: this.options.threads };        
         
-            var startRunner = new TaskRunner(this.startTasks, this);
+            var startRunner = new TaskRunner(this.buildStartTasks, options);
             yield startRunner.run();
 
             for (i = 0; i < this.configs.length; i++) {
-                yield this.configs[i].run();
+                yield this.configs[i].start();
             } 
             
-            var completionRunner = new TaskRunner(this.completionTasks, this);
+            var completionRunner = new TaskRunner(this.buildCompleteTasks, options);
             yield completionRunner.run();
             
             if (cb) cb();
-            
+                        
         }).call(this);
     }
-
-    create = function(options) {
-        return new BuildInstance(options);
-    }
-
+    
+    
     module.exports = {
-        create: create
+        create: function(options) {
+            return new BuildInstance(options);
+        }
     }
 }());
