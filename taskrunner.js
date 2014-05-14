@@ -9,7 +9,7 @@
     
     TaskRunner.prototype.run = function*() {
         if (this.hasRun)
-            throw new Error("This runner instance has already been used. Create a new TaskRunner.");           
+            throw new Error("This runner instance has already been run");           
         this.hasRun = true;
         
         var self = this;
@@ -17,31 +17,50 @@
         var activeThreads = 0;
         
         // Checks if all dependent tasks have completed.
-        var dependenciesMet = function(task) {
-            for (var i = 0; i < task.deps.length; i++) {
-                matches = runnables.filter(function(r) {
-                    return r.name === task.deps[i];
+        var isSignaled = function(runnable) {
+            //Already done?
+            if (runnable.handlers && runnable.handlers.length === 0)
+                return false;
+            
+            //Not done yet.
+            for (var i = 0; i < runnable.ref.deps.length; i++) {
+                var matches = runnables.filter(function(r) {
+                    return r.ref.name === runnable.ref.deps[i];
                 });
                 if (!matches.length)
-                    throw new Error("Cannot find dependent task " + task.deps[i] + " for task " + task.name);
+                    throw new Error("Cannot find dependent task " + runnable.ref.deps[i] + " for task " + runnable.ref.name);
                 else 
-                    if (matches[0].length !== matches[0].completed) return false; 
+                    if ((typeof matches[0].handlers === "undefined") || (matches[0].total > matches[0].completed)) {
+                        return false; 
+                    }
             }
+            
             return true;
         }
         
-        // Tasks which have pending, incomplete handlers
-        var isIncomplete = function(task) {
-            return task.started === task.handlers.length;
-        }
-
         //Do the do.
-        var next = function*() {            
-            var runnable = runnables.filter(isIncomplete).filter(dependenciesMet);
-            if (runnable.length) {
-                var handler = runnables[i].handlers.shift();
+        var next = function*() {
+            // Signal all runnables that can run
+            var handler;
+            var signaled = runnables.filter(isSignaled);                
+            for(var i = 0; i < signaled.length; i++) {
+                if (typeof(signaled[i].handlers) === "undefined" && !signaled[i].isStarting) {
+                    signaled[i].isStarting = true;
+                    signaled[i].handlers = yield signaled[i].ref.getHandlers();;
+                    signaled[i].total = signaled[i].handlers.length;
+                    signaled[i].isStarting = false;
+                }                    
+            }
 
-                runnable.started++;
+            for(var i = 0; i < signaled.length; i++) {
+                if (signaled[i].handlers && signaled[i].handlers.length) {
+                    handler = signaled[i].handlers.shift();
+                    var runnable = signaled[i];
+                    break;
+                }
+            }
+            
+            if (handler) {
                 activeThreads++;
                 yield handler;
                 activeThreads--;
@@ -56,18 +75,17 @@
         var scheduler = function() {
             var gens = [];
             var threads = self.build.options.threads - activeThreads;
-            while (threads--) gens.push(next);
+            if (threads > 0)
+                while (threads--) gens.push(next);
             return gens;
         }
 
         //Ask all tasks to return work items (handlers) that need to be run
         for (var i = 0; i < this.tasks.length; i++) {
             runnables.push({
-                name: this.tasks[i].name,
-                deps: this.tasks[i].deps,
-                handlers: yield this.tasks[i].getHandlers(),
+                ref: this.tasks[i],    
                 completed: 0,
-                started: 0
+                total: 0,
             });
         }
         

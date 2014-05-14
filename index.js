@@ -23,14 +23,14 @@
 
 
     BuildInstance.prototype.onStart = function(handler, name, deps) {        
-        var task = new Task(handler, name, deps);
+        var task = new Task(handler, name, deps, this);
         this.startTasks.push(task);
         return task;
     }
 
 
     BuildInstance.prototype.onComplete = function(handler, name, deps) {
-        var task = new Task(handler, name, deps);
+        var task = new Task(handler, name, deps, this);
         this.completionTasks.push(task);
         return task;
     }
@@ -41,15 +41,15 @@
         
         co(function*() {
         
-            startTasks = new TaskRunner(this.startTasks, this);
-            yield startTasks.run();
+            var startRunner = new TaskRunner(this.startTasks, this);
+            yield startRunner.run();
 
             for (i = 0; i < this.configs.length; i++) {
                 yield this.configs[i].run(watch);
             } 
             
-            completionTasks = new TaskRunner(this.completionTasks, this);
-            yield completionTasks.run();
+            var completionRunner = new TaskRunner(this.completionTasks, this);
+            yield completionRunner.run();
             
             if (cb) cb();
             
