@@ -8,7 +8,7 @@ Why the weird name? Because it is being developed as part of the Fora Project (h
 
 ## HOWTO
 
-There are essentially two steps
+There are essentially three steps
 
 1. npm install 'fora-build'
 2. Write a build.js file
