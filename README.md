@@ -110,5 +110,4 @@ This example should help you get started. This is the same code that runs in the
 
 ```
 
-For a more complicated example, like the one we use in the Fora Project check the /examples directory
 

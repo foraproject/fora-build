@@ -81,6 +81,7 @@ buildConfig = function(config) {
     */    
     config.job(function*() {
         console.log("Restarting the fake server .... done");
+        //yield exec("restart.sh"); //.. for example
     }, "fake_server_restart");
 
 }
