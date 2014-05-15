@@ -35,6 +35,9 @@ This example should help you get started. This is the same code that runs in the
         });
     });
 
+    /*
+        The actual configuration
+    */
     var buildConfig = function(config) {
         /*
             The first task to run when the build starts.
