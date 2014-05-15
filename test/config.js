@@ -19,7 +19,7 @@ exec = thunkify(function(cmd, cb) {
 /*
     Configuration Section.
 */
-buildConfig = function(config) {
+buildConfig = function() {
     /*
         The first task to run when the build starts.
         Let's call it "start_build". It just prints a message.
@@ -27,7 +27,7 @@ buildConfig = function(config) {
         Note: name (ie "start_build") isn't stricly required, 
         but it allows us to declare it as a dependency in another job.
     */
-    config.onBuildStart(function*() {
+    this.onBuildStart(function*() {
         console.log("Let's start copying files...");
     }, "start_build");
 
@@ -36,7 +36,7 @@ buildConfig = function(config) {
         Let's create an app directory.
         We add "start_build" as a dependency, so that it runs after the message.
     */
-    config.onBuildStart(function*() {
+    this.onBuildStart(function*() {
         console.log("Creating app directory");
         yield exec("rm app -rf");
         yield exec("mkdir app");
@@ -57,9 +57,9 @@ buildConfig = function(config) {
 
     /*
         Copies all text and html files into the app directory.
-        Write as many config.watch() methods as you want, in this example we use only one.            
+        Write as many this.watch() methods as you want, in this example we use only one.            
     */
-    config.watch(["*.txt", "*.html"], function*(filePath) {
+    this.watch(["*.txt", "*.html"], function*(filePath) {
         var dest = filePath.replace(/^src\//, 'app/');
         yield ensureDirExists(dest);
         yield exec("cp " + filePath + " " + dest);
@@ -71,7 +71,7 @@ buildConfig = function(config) {
     /*
         A job to merge txt files and create wisdom.data
     */    
-    config.job(function*() {
+    this.job(function*() {
         yield exec("cat app/somefile.txt app/anotherfile.txt app/abc.html > app/wisdom.data");
     }, "merge_txt_files");
     
@@ -79,7 +79,7 @@ buildConfig = function(config) {
     /*
         A fake server restart. Just says it did it.        
     */    
-    config.job(function*() {
+    this.job(function*() {
         console.log("Restarting the fake server .... done");
         //yield exec("restart.sh"); //.. for example
     }, "fake_server_restart");

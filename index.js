@@ -20,7 +20,7 @@
     BuildInstance.prototype.configure = function(fn, root) {
         var configuration = new Configuration(root, this);    
         this.configs.push(configuration);        
-        fn(configuration);
+        fn.call(configuration);
         return configuration;
     }
 
@@ -75,6 +75,7 @@
     BuildInstance.prototype.startMonitoring = function*() {
         var self = this;
         var fileChangeEvents = [];
+        this.monitoring = true;
         
         var onFileChange = function(ev, job, filename, watcher, config) {
             var matches = fileChangeEvents.filter(function(c) { return c.filename === filename && c.ev === ev; });
