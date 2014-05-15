@@ -71,21 +71,59 @@
             setTimeout(cb, ms);
         };
     }
-                
     
     BuildInstance.prototype.startMonitoring = function*() {
+        var self = this;
+        var fileChangeEvents = [];
+        
+        var onFileChange = function(ev, job, filename, watcher, config) {
+            var matches = fileChangeEvents.filter(function(c) { return c.filename === filename && c.ev === ev; });
+            if (!matches.length)
+                fileChangeEvents.push({ ev: ev, job: job, filename: filename, watcher: watcher, config: config });
+        };               
+        
+        this.configs.forEach(function(config) {
+            process.chdir(config.root);
+
+            config.watchJobs.forEach(function(j) {
+                j.watchedFiles.forEach(function(f) {
+                    var watcher = fs.watch(f, function(ev, filename) {
+                        onFileChange(ev, j, f, watcher, config);
+                    });
+                });
+            });
+
+            process.chdir(self.dir);
+        });
+        
+            
         while(true) {
-            for (i = 0; i < this.configs.length; i++) {
-                var config = this.configs[i]; 
-                process.chdir(config.root);
-                while(config.fileChangeEvents.length) {
-                    var funcInfo = config.fileChangeEvents.shift();
-                    yield funcInfo.fn.call(config, funcInfo.filename, "change");
-                }
-                yield config.runQueuedJobs();
+            while(fileChangeEvents.length) {
+                var funcInfo = fileChangeEvents.shift();
+                
+                //Kill (and later recreate) watching that file.
+                //So that it won't get into a loop if fn changes the same file
+                funcInfo.watcher.close();
+                    
+                process.chdir(funcInfo.config.root);
+
+                yield funcInfo.job.fn.call(funcInfo.config, funcInfo.filename, "change");
+                yield funcInfo.config.runQueuedJobs();
+                    
+                //Put the watch back.
+                (function(funcInfo) {
+                    //The exists check is to handle the temp files that many editors create.
+                    //They disappear instantaneously, and fs.watch will except.
+                    if (fs.existsSync(funcInfo.filename)) {
+                        var watcher = fs.watch(funcInfo.filename, function(ev, filename) {
+                            onFileChange(ev, funcInfo.job, funcInfo.filename, watcher, funcInfo.config);
+                        });
+                    }
+                })(funcInfo);
+
                 process.chdir(this.dir);
-                yield sleep(1000);
-            }
+            }                          
+            yield sleep(1000);
         }          
     }
     

@@ -14,8 +14,6 @@
         this.buildCompleteJobs = [];
         this.watchJobs = [];
         this.queuedJobs = [];
-
-        this.fileChangeEvents = [];
     }
 
     Configuration.prototype.job = function(fn, name, deps) {        
@@ -89,19 +87,6 @@
         yield completionRunner.run();
 
         yield this.runQueuedJobs();
-
-        if (this.build.monitor) {        
-            var self = this;
-            this.watchJobs.forEach(function(j) {
-                j.watchedFiles.forEach(function(f) {
-                    fs.watch(f, function(ev, filename) {
-                        var matches = self.fileChangeEvents.filter(function(c) { return c.filename === f; });
-                        if (!matches.length)
-                            self.fileChangeEvents.push({ fn: j.fn, filename: f});
-                    });              
-                });
-            });
-        }
 
         process.chdir(this.build.dir);
     };
