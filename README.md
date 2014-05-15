@@ -77,7 +77,7 @@ This example should help you get started. This is the same code that runs in the
 
         /*
             Copies all text and html files into the app directory.
-            You can write as many config.watch() methods as you want.            
+            Write as many config.watch() methods as you want, in this example we use only one.            
         */
         config.watch(["*.txt", "*.html"], function*(filePath) {
             var dest = filePath.replace(/^src\//, 'app/');
