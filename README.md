@@ -106,7 +106,7 @@ This example should help you get started. This is the same code that runs in the
 
     build = require('fora-build').create({ threads: 4 }); //That's right. Things get done in parallel.    
     build.configure(buildConfig, 'data'); //data is the directory where your files are.
-    build.start(true, done); //true indicates that the build should keep monitoring files.
+    build.start(true, function() { console.log("Build is done. But we're still monintoring."); }); //build.start(true, cb) to keep monitoring
 
 ```
 
