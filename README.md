@@ -9,12 +9,12 @@ Why the weird name? Because it is being developed as part of the Fora Project (h
 ## Getting Started
 
 There are essentially two steps
-    1. Write a build.js file
-    2. node --harmony build.js
+1. Write a build.js file
+2. node --harmony build.js
     
 ### The build.js file
 
-This example should help you get started.
+This example should help you get started. This is the same code that runs in the test/ directory.
 
 ```javascript
     var buildConfig = function(config) {
@@ -82,8 +82,8 @@ This example should help you get started.
 
     }
 
-    build = require('..').create({ threads: 4 });            
-    build.configure(buildConfig, 'data'); //data is the directory where the files are
+    build = require('..').create({ threads: 4 }); //That's right. Things get done in parallel.    
+    build.configure(buildConfig, 'data'); //data is the directory where your files are.
     build.start(true, done); //true indicates that the build should keep monitoring files.
 
 ```
