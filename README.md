@@ -20,23 +20,6 @@ This example should help you get started. This is the same code that runs in the
 
 ```javascript
 /*
-    Some external libs and functions we'll use in our build script
-*/
-co = require('co');
-thunkify = require('thunkify');
-fs = require('fs');
-path = require('path');
-
-spawn = require('child_process').spawn;
-_exec = require('child_process').exec;
-exec = thunkify(function(cmd, cb) {
-    _exec(cmd, function(err, stdout, stderr) {
-        console.log(cmd);
-        cb(err, stdout.substring(0, stdout.length - 1));
-    });
-});
-
-/*
     Configuration Section.
 */
 buildConfig = function(config) {
@@ -92,7 +75,7 @@ buildConfig = function(config) {
         A job to merge txt files and create wisdom.data
     */    
     config.job(function*() {
-        yield exec("cat app/somefile.txt app/anotherfile.txt > app/wisdom.data");
+        yield exec("cat app/somefile.txt app/anotherfile.txt app/abc.html > app/wisdom.data");
     }, "merge_txt_files");
     
 
@@ -101,8 +84,8 @@ buildConfig = function(config) {
     */    
     config.job(function*() {
         console.log("Restarting the fake server .... done");
+        //yield exec("restart.sh"); //.. for example
     }, "fake_server_restart");
-
 }
 
 build = require('fora-build').create({ threads: 4 }); //That's right. Things get done in parallel.    
