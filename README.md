@@ -1,8 +1,8 @@
 # fora-build
 
-fora-build is a very simple build module for node.js (using ES6 generators). It encourages you to use stuff you already
-know like bash commands and built-in node functions to get stuff done. There will be no configuration based stuff going
-on like gruntjs.
+fora-build is a very simple build module for node.js (using ES6 generators). It prefers code over configuration and 
+encourages you to use stuff you already know like bash commands and built-in node functions. Also monitors files for 
+changes after the build.
 
 Why the weird name? Because it is being developed as part of the Fora Project (http://github.com/jeswin/fora).
 
@@ -90,7 +90,7 @@ buildConfig = function(config) {
 
 build = require('fora-build').create({ threads: 4 }); //That's right. Things get done in parallel.    
 build.configure(buildConfig, 'data'); //data is the directory where your files are.
-build.start(true, function() { console.log("Build is done. But we're still monintoring."); }); //build.start(true, cb) to keep monitoring
+build.start(true, function() { console.log("Build is done. But we're still monitoring."); }); //build.start(true, cb) to keep monitoring
 
 ```
 
