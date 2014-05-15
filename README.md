@@ -10,8 +10,9 @@ Why the weird name? Because it is being developed as part of the Fora Project (h
 
 There are essentially two steps
 
-1. Write a build.js file
-2. node --harmony build.js
+1. npm install 'fora-build'
+2. Write a build.js file
+3. node --harmony build.js
     
 ### The build.js file
 
