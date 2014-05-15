@@ -18,6 +18,23 @@ There are essentially two steps
 This example should help you get started. This is the same code that runs in the test/ directory.
 
 ```javascript
+    /*
+        Some external libs and functions we'll use in our build script
+    */
+    co = require('co');
+    thunkify = require('thunkify');
+    fs = require('fs');
+    path = require('path');
+
+    spawn = require('child_process').spawn;
+    _exec = require('child_process').exec;
+    exec = thunkify(function(cmd, cb) {
+        _exec(cmd, function(err, stdout, stderr) {
+            console.log(cmd);
+            cb(err, stdout.substring(0, stdout.length - 1));
+        });
+    });
+
     var buildConfig = function(config) {
         /*
             The first task to run when the build starts.
@@ -83,7 +100,7 @@ This example should help you get started. This is the same code that runs in the
 
     }
 
-    build = require('..').create({ threads: 4 }); //That's right. Things get done in parallel.    
+    build = require('fora-build').create({ threads: 4 }); //That's right. Things get done in parallel.    
     build.configure(buildConfig, 'data'); //data is the directory where your files are.
     build.start(true, done); //true indicates that the build should keep monitoring files.
 
