@@ -25,7 +25,7 @@
     }
 
 
-    BuildInstance.prototype.onBuildStart = function(fn, name, deps) {        
+    BuildInstance.prototype.onBuildStart = function(fn, name, deps) {
         var job = new Job(fn, name, deps, this);
         this.buildStartJobs.push(job);
         return job;

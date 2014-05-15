@@ -4,7 +4,11 @@
     var Task = function(fn, name, deps, parent, options) {
         this.fn = fn;
         this.name = name || "undefined";
+
         this.deps = deps || [];
+        if (typeof deps === "string")
+            deps = [deps];
+
         this.parent = parent;
         this.options = options;
     }
