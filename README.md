@@ -36,9 +36,9 @@ This example should help you get started. This is the same code that runs in the
     });
 
     /*
-        The actual configuration
+        Configuration Section.
     */
-    var buildConfig = function(config) {
+    buildConfig = function(config) {
         /*
             The first task to run when the build starts.
             Let's call it "start_build". It just prints a message.
@@ -75,23 +75,24 @@ This example should help you get started. This is the same code that runs in the
 
 
         /*
-            Copies all text files into the app directory.
+            Copies all text and html files into the app directory.
+            
         */
-        config.watch(["*.txt"], function*(filePath) {
+        config.watch(["*.txt", "*.html"], function*(filePath) {
             var dest = filePath.replace(/^src\//, 'app/');
             yield ensureDirExists(dest);
             yield exec("cp " + filePath + " " + dest);
-        }, "copy_text_files");
+            this.queue("merge_txt_files");
+            this.queue("fake_server_restart");
+        }, "copy_files");
         
 
         /*
-            Once all text files are copied, we merge it into one big html file.
-            Once we finish merging, let's queue a job called "fake_server_restart" (defined further below).
-        */
-        config.watch(["*.html"], function*(filePath) {
-            console.log(filePath);
-            this.queue("fake_server_restart");
-        }, "print_html_file", ["copy_text_files"]);    
+            A job to merge txt files and create wisdom.data
+        */    
+        config.job(function*() {
+            yield exec("cat app/somefile.txt app/anotherfile.txt > app/wisdom.data");
+        }, "merge_txt_files");
         
 
         /*
