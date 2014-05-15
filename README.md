@@ -2,7 +2,7 @@
 
 fora-build is a very simple build system for node.js (using ES6 generators). It encourages you to use stuff you already
 know, like bash commands and built-in node functions to get stuff done. There will be no configuration based stuff going
-on, like gruntjs.
+on like gruntjs.
 
 Why the weird name? Because it is being developed as part of the Fora Project (http://github.com/jeswin/fora).
 
