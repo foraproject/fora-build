@@ -25,8 +25,6 @@
                 pattern = result;
             }
             
-            this.watchedDirs.push(pattern.dir);
-            
             if (!pattern.recurse)
                 pattern.recurse = true;
 
@@ -46,7 +44,7 @@
     
     Watch.prototype.getTasks = function*() {
 
-        var walk = function*(dir, recurse, pattern) {
+        var walk = function*(dir, recurse) {
             var results = [];
             
             var files = yield readdir(dir);
@@ -54,34 +52,38 @@
                 var fullPath = path.join(dir, files[i]);
                 var info = yield stat(fullPath);
                 if (info.isDirectory()) {
-                    results.push({ path: fullPath, type: 'dir', pattern: pattern });
+                    results.push({ path: fullPath, type: 'dir' });
                     if (recurse) {
-                        results = results.concat(yield walk(fullPath, recurse, pattern));
+                        results = results.concat(yield walk(fullPath, recurse));
                     }
                 } else {
-                    results.push({ path: fullPath, type: 'file', pattern: pattern });
+                    results.push({ path: fullPath, type: 'file' });
                 }
             }
             return results;
         }
 
         
-        var fileWalkers = []        
+        var dirWalkers = []        
         
         for (var i = 0; i < this.patterns.length; i++) {
-            fileWalkers.push(walk(this.patterns[i].dir, this.patterns[i].recurse, this.patterns[i]));
+            dirWalkers.push(walk(this.patterns[i].dir, this.patterns[i].recurse));
         }
-        var filesList = yield fileWalkers;
+        var pathList = yield dirWalkers;
 
         var self = this;
         var yieldables = [];
-        filesList.forEach(function(files) {
-            files.forEach(function(file) {
-                if (file.type === 'file' && file.pattern.regex.test(file.path)) {                    
-                    yieldables.push(function*() {
-                        yield self.fn.call(self.parent, file.path, "change");
-                    });
-                    self.watchedFiles.push(file.path);
+        pathList.forEach(function(paths) {
+            paths.forEach(function(entry) {
+                if (entry.type === "dir") {
+                    self.watchedDirs.push(entry.path);
+                } else if (entry.type === 'file') {         
+                    if (self.patterns.filter(function(p) { return p.regex.test(entry.path) }).length) {
+                        yieldables.push(function*() {
+                            yield self.fn.call(self.parent, entry.path, "change");
+                        });
+                        self.watchedFiles.push(entry.path);
+                    }
                 }
             });
         });
