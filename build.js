@@ -12,6 +12,7 @@
         this.buildStartJobs = [];
         this.buildCompleteJobs = [];    
         this.dir = process.cwd();
+        this.state = {};
 
         this.options = options || {};
         this.options.threads = this.options.threads || 4;
@@ -41,7 +42,6 @@
     
     
     Build.prototype.start = function(monitor, cb) {
-        this.state = {};
         this.jobQueue = [];
         this.monitor = monitor;
         
