@@ -6,7 +6,7 @@ spawn = function(options) {
         script = _spawn(proc, args);
         if (options.log) {
             script.stdout.on('data', function (data) {
-              options.log(data.toString());
+                options.log(data);
             });
         }
         return script;
