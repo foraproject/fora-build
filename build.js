@@ -79,7 +79,7 @@
         this.monitoring = true;
         
         var onFileChange = function(ev, filePath, watcher, job, config) {
-            var matches = fileChangeEvents.filter(function(c) { return c.filePath === filePath });
+            var matches = fileChangeEvents.filter(function(c) { return c.filePath === filePath && c.config === config });
             if (!matches.length)
                 fileChangeEvents.push({ ev: ev, filePath: filePath, watcher: watcher, job: job, config: config });
         };
@@ -121,7 +121,7 @@
             
         while(true) {
             while(fileChangeEvents.length) {
-                var changeNotification = fileChangeEvents.shift();
+                var changeNotification = fileChangeEvents[0];
 
                 process.chdir(changeNotification.config.root);
 
@@ -135,7 +135,10 @@
 
                     yield changeNotification.job.fn.call(changeNotification.config, changeNotification.filePath, "change");
                     yield changeNotification.config.runQueuedJobs();
-                        
+                    
+                    //Remove the event. We have processed it.
+                    fileChangeEvents.shift();
+
                     //Put the watch back.
                     (function(changeNotification) {
                         var watcher = fs.watch(changeNotification.filePath, function(ev, filename) {
