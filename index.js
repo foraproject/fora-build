@@ -1,6 +1,8 @@
-(function () {
-    Build = require('./build');
-    tools = require('./tools');
+(function() {
+    "use strict"
+    
+    var Build = require('./build');
+    var tools = require('./tools');
     
     module.exports = {
         create: function(options) {
@@ -8,4 +10,4 @@
         },
         tools: tools
     }
-}());
+})();

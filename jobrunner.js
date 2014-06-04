@@ -4,8 +4,9 @@
     var Job = require('./job');
     
     var JobRunner = function(jobs, options) {
-        this.jobs = jobs;
-        this.options = options;
+        this.jobs = jobs || [];
+        this.options = options || { threads : 1};
+        
     };
 
     
@@ -60,7 +61,7 @@
         
         //Do the do.
         var next = function*() {
-            // Signal all jobList that can run
+            // Signal all jobs that can run
             var fn;
             var signaled = jobList.filter(isSignaled);                
             for(var i = 0; i < signaled.length; i++) {

@@ -1,7 +1,7 @@
 {
     "author": "Jeswin Kumar <jeswinpk@agilehead.com>",
     "name": "fora-build",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "description": "Fora's Build System.",
     "repository": {
         "type": "git",

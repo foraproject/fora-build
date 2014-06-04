@@ -39,8 +39,8 @@
     };
     
     Watch.prototype = Object.create(Job.prototype);
-
     Watch.prototype.constructor = Watch;
+    
     
     Watch.prototype.getTasks = function*() {
 

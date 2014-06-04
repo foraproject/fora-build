@@ -1,22 +1,28 @@
 (function () {
-    co = require('co');
-    thunkify = require('thunkify');
-    path = require('path');
+    "use strict";
+    
+    var co = require('co'),
+        thunkify = require('thunkify'),
+        fs = require('fs'),
+        path = require('path');
 
     var Job = require('./job'),
         Configuration = require('./configuration'),
-        JobRunner = require('./jobrunner');
+        JobRunner = require('./jobrunner'),
+        JobQueue = require('./jobqueue');
 
-    Build = function(options) {
+    var Build = function(options) {
+        JobQueue.call(this, process.cwd(), this);        
+        
         this.configs = [];
-        this.buildStartJobs = [];
-        this.buildCompleteJobs = [];    
-        this.dir = process.cwd();
         this.state = {};
 
         this.options = options || {};
         this.options.threads = this.options.threads || 4;
     }
+
+    Build.prototype = Object.create(JobQueue.prototype);
+    Build.prototype.constructor = Build;
 
 
     Build.prototype.configure = function(fn, root) {
@@ -25,45 +31,34 @@
         fn.call(configuration);
         return configuration;
     }
-
-
-    Build.prototype.onBuildStart = function(fn, name, deps) {
-        var job = new Job(fn, name, deps, this);
-        this.buildStartJobs.push(job);
-        return job;
-    }
-
-
-    Build.prototype.onBuildComplete = function(fn, name, deps) {
-        var job = new Job(fn, name, deps, this);
-        this.buildCompleteJobs.push(job);
-        return job;
-    }
     
     
     Build.prototype.start = function(monitor, cb) {
-        this.jobQueue = [];
-        this.monitor = monitor;
+        var self = this;
         
-        co(function*() {
-            var options = { threads: this.options.threads };        
-        
-            var startRunner = new JobRunner(this.buildStartJobs, options);
-            yield startRunner.run();
+        self.jobQueue = [];
+        self.monitor = monitor;
 
-            for (i = 0; i < this.configs.length; i++) {
-                yield this.configs[i].startBuild();
-            } 
-            
-            var completionRunner = new JobRunner(this.buildCompleteJobs, options);
-            yield completionRunner.run();
+        co(function*() {
+            var options = { threads: self.options.threads };        
+        
+            self.activeJobs.push(
+                new Job(function*() {
+                    for (var i = 0; i < self.configs.length; i++) {
+                        self.configs[i].state = {};
+                        yield self.configs[i].runJobs();           
+                    }    
+                })
+            );
+
+            yield self.runJobs();
             
             if (cb) cb();
 
             if (monitor)
-                yield this.startMonitoring();
+                yield self.startMonitoring();
                         
-        }).call(this);
+        })();
     }
 
 
@@ -83,42 +78,13 @@
             if (!matches.length)
                 fileChangeEvents.push({ ev: ev, filePath: filePath, watcher: watcher, job: job, config: config });
         };
-        
+
         this.configs.forEach(function(config) {
             process.chdir(config.root);
-
-            config.watchJobs.forEach(function(job) {
-                job.watchers = {};
-            
-                job.watchedFiles.forEach(function(filePath) {
-                    var watcher = fs.watch(filePath, function(ev, filename) {
-                        onFileChange(ev, filePath, watcher, job, config);
-                    });
-                    job.watchers[filePath] = watcher;
-                });
-                
-                job.watchedDirs.forEach(function(dirPath) {
-                    fs.watch(dirPath, function(ev, filename) {
-                        filePath = path.join(dirPath, filename);
-                        if (job.watchers[filePath]) {
-                            onFileChange(ev, filePath, job.watchers[filePath], job, config);
-                        } else {
-                            //Check if we match any patterns. If yes, then add a new file watcher
-                            if (job.patterns.filter(function(p) { return p.regex.test(filePath) }).length) {
-                                var watcher = fs.watch(filePath, function(ev, filename) {
-                                    onFileChange(ev, filePath, watcher, job, config);
-                                });
-                                job.watchers[filePath] = watcher;
-                            }
-                        }
-                    });
-                });
-            });
-
-            process.chdir(self.dir);
+            config.startMonitoring(onFileChange);
+            process.chdir(self.root);
         });
-        
-            
+       
         while(true) {
             while(fileChangeEvents.length) {
                 var changeNotification = fileChangeEvents[0];
@@ -134,7 +100,6 @@
                     changeNotification.watcher.close();
 
                     yield changeNotification.job.fn.call(changeNotification.config, changeNotification.filePath, "change");
-                    yield changeNotification.config.runQueuedJobs();
                     
                     //Remove the event. We have processed it.
                     fileChangeEvents.shift();
@@ -147,8 +112,17 @@
                     })(changeNotification);
                 
                 }
-                process.chdir(this.dir);
-            }                          
+                process.chdir(this.root);
+            }
+
+            for (var i = 0; i < self.configs.length; i++) {
+                if (self.configs[i].queuedJobs.length)
+                    yield self.configs[i].runQueuedJobs();
+            }            
+            
+            if (this.queuedJobs.length)
+                yield this.runQueuedJobs();
+                        
             yield sleep(1000);
         }          
     }
