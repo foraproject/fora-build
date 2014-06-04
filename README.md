@@ -30,7 +30,7 @@ buildConfig = function() {
         Note: name (ie "start_build") isn't stricly required, 
         but it allows us to declare it as a dependency in another job.
     */
-    this.onBuildStart(function*() {
+    this.onStart(function*() {
         console.log("Let's start copying files...");
     }, "start_build");
 
@@ -39,7 +39,7 @@ buildConfig = function() {
         Let's create an app directory.
         We add "start_build" as a dependency, so that it runs after the message.
     */
-    this.onBuildStart(function*() {
+    this.onStart(function*() {
         console.log("Creating app directory");
         yield exec("rm app -rf");
         yield exec("mkdir app");
