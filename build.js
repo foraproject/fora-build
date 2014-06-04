@@ -71,10 +71,11 @@
     Build.prototype.startMonitoring = function*() {
         var self = this;
         var fileChangeEvents = [];
-        this.monitoring = true;
+        var processedCycle = []; //The files which have changed in this change cycle
+        this.monitoring = true;        
         
         var onFileChange = function(ev, filePath, watcher, job, config) {
-            var matches = fileChangeEvents.filter(function(c) { return c.filePath === filePath && c.config === config });
+            var matches = fileChangeEvents.concat(processedCycle).filter(function(c) { return c.filePath === filePath && c.config === config });
             if (!matches.length)
                 fileChangeEvents.push({ ev: ev, filePath: filePath, watcher: watcher, job: job, config: config });
         };
@@ -86,6 +87,8 @@
         });
        
         while(true) {
+            processedCycle = [];
+            
             while(fileChangeEvents.length) {
                 var changeNotification = fileChangeEvents[0];
 
@@ -98,6 +101,9 @@
                     //If file watcher, kill (and later recreate) watching that file.
                     //So that it won't get into a loop if fn changes the same file
                     changeNotification.watcher.close();
+
+                    //Push this to the list of files we won't monitor in this cycle.
+                    processedCycle.push({ filePath: changeNotification.filePath, config: changeNotification.config });
 
                     yield changeNotification.job.fn.call(changeNotification.config, changeNotification.filePath, "change");
                     
