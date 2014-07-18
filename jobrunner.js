@@ -67,7 +67,7 @@
             for(var i = 0; i < signaled.length; i++) {
                 if (typeof(signaled[i].tasks) === "undefined" && !signaled[i].isStarting) {
                     signaled[i].isStarting = true;
-                    signaled[i].tasks = yield signaled[i].job.getTasks();;
+                    signaled[i].tasks = yield* signaled[i].job.getTasks();;
                     signaled[i].total = signaled[i].tasks.length;
                     signaled[i].isStarting = false;
                 }                    
@@ -83,12 +83,12 @@
             
             if (fn) {
                 activeThreads++;
-                yield fn;
+                yield* fn;
                 activeThreads--;
                 jobData.completed++;
 
                 //Now that this work item has completed, it is time to queue more.
-                yield scheduler();
+                yield* scheduler();
             }
         }
         
@@ -143,7 +143,7 @@
         }
         
         //Queue initial work items
-        yield scheduler();
+        yield* scheduler();
         
         this.isRunning = false;   
     }

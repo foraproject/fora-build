@@ -2,7 +2,7 @@
     Some external libs and functions we'll use in our build script
 */
 co = require('co');
-thunkify = require('thunkify');
+thunkify = require('fora-node-thunkify');
 fs = require('fs');
 path = require('path');
 
@@ -23,8 +23,8 @@ buildConfig = function() {
     /*
         The first task to run when the build starts.
         Let's call it "start_build". It just prints a message.
-        
-        Note: name (ie "start_build") isn't stricly required, 
+
+        Note: name (ie "start_build") isn't stricly required,
         but it allows us to declare it as a dependency in another job.
     */
     this.onStart(function*() {
@@ -38,8 +38,8 @@ buildConfig = function() {
     */
     this.onStart(function*() {
         console.log("Creating app directory");
-        yield exec("rm app -rf");
-        yield exec("mkdir app");
+        yield* exec("rm app -rf");
+        yield* exec("mkdir app");
     }, "create_dirs", ["start_build"]);
 
 
@@ -50,38 +50,38 @@ buildConfig = function() {
     ensureDirExists = function*(file) {
         var dir = path.dirname(file);
         if (!fs.existsSync(dir)) {
-            yield exec("mkdir " + dir + " -p");
-        } 
+            yield* exec("mkdir " + dir + " -p");
+        }
     }
 
 
     /*
         Copies all text and html files into the app directory.
-        Write as many this.watch() methods as you want, in this example we use only one.            
+        Write as many this.watch() methods as you want, in this example we use only one.
     */
     this.watch(["*.txt", "*.html"], function*(filePath) {
         var dest = filePath.replace(/^src\//, 'app/');
-        yield ensureDirExists(dest);
-        yield exec("cp " + filePath + " " + dest);
+        yield* ensureDirExists(dest);
+        yield* exec("cp " + filePath + " " + dest);
         this.queue("merge_txt_files");
         this.queue("fake_server_restart");
     }, "copy_files");
-    
+
 
     /*
         A job to merge txt files and create wisdom.data
-    */    
+    */
     this.job(function*() {
-        yield exec("cat app/somefile.txt app/anotherfile.txt app/abc.html > app/wisdom.data");
+        yield* exec("cat app/somefile.txt app/anotherfile.txt app/abc.html > app/wisdom.data");
     }, "merge_txt_files");
-    
+
 
     /*
-        A fake server restart. Just says it did it.        
-    */    
+        A fake server restart. Just says it did it.
+    */
     this.job(function*() {
         console.log("Restarting the fake server .... done");
-        //yield exec("restart.sh"); //.. for example
+        //yield* exec("restart.sh"); //.. for example
     }, "fake_server_restart");
 }
 

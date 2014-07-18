@@ -1,7 +1,7 @@
 (function () {
     "use strict";
-    
-    var thunkify = require('thunkify'),
+
+    var thunkify = require('fora-node-thunkify'),
         path = require("path");
 
     var _spawn = require('child_process').spawn;
@@ -34,17 +34,17 @@
     var ensureDirExists = function(options) {
         var options = options || {};
         var fnExec = exec();
-        return function*(file) {            
+        return function*(file) {
             var dir = path.dirname(file);
             if (!fs.existsSync(dir)) {
-                yield fnExec("mkdir -p " + dir);
-            } 
+                yield* fnExec("mkdir -p " + dir);
+            }
         }
     }
 
     module.exports = {
         fs: {
-           ensureDirExists: ensureDirExists 
+           ensureDirExists: ensureDirExists
         },
         process: {
             exec: exec,
@@ -53,4 +53,3 @@
     }
 
 })();
-
