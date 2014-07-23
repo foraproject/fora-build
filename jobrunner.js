@@ -1,15 +1,15 @@
 (function () {
     "use strict";
-    
+
     var Job = require('./job');
-    
+
     var JobRunner = function(jobs, options) {
         this.jobs = jobs || [];
         this.options = options || { threads : 1};
-        
+
     };
 
-    
+
     /*
         If a job is explicitly passed in, only that job and its dependencies will be started.
         Otherwise we'll try to run everything.
@@ -29,21 +29,21 @@
                     throw new Error("The job " + fn + " was not found");
             }
         }
-        
+
         if (this.isRunning)
-            throw new Error("Cannot call JobRunner.run while it is already in running state");           
+            throw new Error("Cannot call JobRunner.run while it is already in running state");
         this.isRunning = true;
-        
+
         var self = this;
         var jobList = [];
         var activeThreads = 0;
-        
+
         // Checks if all dependent jobs have completed.
         var isSignaled = function(jobData) {
             //Already done?
             if (jobData.tasks && jobData.tasks.length === 0)
                 return false;
-            
+
             //Not done yet.
             for (var i = 0; i < jobData.job.deps.length; i++) {
                 var matches = jobList.filter(function(r) {
@@ -51,26 +51,26 @@
                 });
                 if (!matches.length)
                     throw new Error("Cannot find dependent job " + jobData.job.deps[i] + " for job " + jobData.job.name);
-                else 
+                else
                     if ((typeof matches[0].tasks === "undefined") || (matches[0].total > matches[0].completed)) {
-                        return false; 
+                        return false;
                     }
             }
             return true;
         }
-        
+
         //Do the do.
         var next = function*() {
             // Signal all jobs that can run
             var fn;
-            var signaled = jobList.filter(isSignaled);                
+            var signaled = jobList.filter(isSignaled);
             for(var i = 0; i < signaled.length; i++) {
                 if (typeof(signaled[i].tasks) === "undefined" && !signaled[i].isStarting) {
                     signaled[i].isStarting = true;
                     signaled[i].tasks = yield* signaled[i].job.getTasks();;
                     signaled[i].total = signaled[i].tasks.length;
                     signaled[i].isStarting = false;
-                }                    
+                }
             }
 
             for(var i = 0; i < signaled.length; i++) {
@@ -80,18 +80,22 @@
                     break;
                 }
             }
-            
+
             if (fn) {
                 activeThreads++;
-                yield* fn;
+                yield* fn();
                 activeThreads--;
                 jobData.completed++;
 
                 //Now that this work item has completed, it is time to queue more.
-                yield* scheduler();
+                var scheduled = scheduler();
+                if (scheduled.length === 1)
+                    yield* scheduled[0]();
+                else
+                    yield scheduled;
             }
         }
-        
+
         // Create a number of parallel jobs, equal to unused threads.
         var scheduler = function() {
             var gens = [];
@@ -108,17 +112,17 @@
                 var matches = jobList.filter(function(t) {
                     return t.name === job.name;
                 });
-                
+
                 //Nope. Not in the jobList, we should add it.
                 if (!matches.length) {
                     //job is not in the jobList already.
                     //We must add it.
                     jobList.push({
-                        job: job,    
+                        job: job,
                         completed: 0,
                         total: 0,
                     });
-                    
+
                     //Also add dependencies for the job
                     var deps = self.jobs.filter(function(t) {
                         return job.deps.indexOf(t.name) > -1
@@ -130,24 +134,28 @@
                 }
             }
             addToJobList(singleJob, jobList);
-        } 
+        }
         //Otherwise, you can run everything
-        else { 
+        else {
             for (var i = 0; i < this.jobs.length; i++) {
                 jobList.push({
-                    job: this.jobs[i],    
+                    job: this.jobs[i],
                     completed: 0,
                     total: 0,
                 });
             }
         }
-        
+
         //Queue initial work items
-        yield* scheduler();
-        
-        this.isRunning = false;   
+        var scheduled = scheduler();
+        if (scheduled.length === 1)
+            yield* scheduled[0]();
+        else
+            yield scheduled;
+
+        this.isRunning = false;
     }
-    
+
     module.exports = JobRunner;
-        
+
 }());
