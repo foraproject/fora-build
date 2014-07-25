@@ -5,8 +5,8 @@
         path = require('path'),
         thunkify = require('fora-node-thunkify'),
         readdir = thunkify(fs.readdir),
-        stat = thunkify(fs.stat);
-
+        stat = thunkify(fs.stat),
+        coTools = require('fora-co-tools')(ENABLE_DEBUG_MODE);
 
     var Job = require('./job');
 
@@ -41,7 +41,6 @@
     Watch.prototype = Object.create(Job.prototype);
     Watch.prototype.constructor = Watch;
 
-
     Watch.prototype.getTasks = function*() {
 
         var walk = function*(dir, recurse) {
@@ -69,7 +68,7 @@
         for (var i = 0; i < this.patterns.length; i++) {
             dirWalkers.push(walk(this.patterns[i].dir, this.patterns[i].recurse));
         }
-        var pathList = yield* dirWalkers;
+        var pathList = yield* coTools.parallel(dirWalkers);
 
         var self = this;
         var yieldables = [];

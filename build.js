@@ -129,7 +129,7 @@
             if (this.queuedJobs.length)
                 yield* this.runQueuedJobs();
 
-            yield* sleep(1000);
+            yield sleep(1000);
         }
     }
 

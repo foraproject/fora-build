@@ -1,7 +1,7 @@
 (function () {
     "use strict";
 
-    var thunkify = require('../fora-node-thunkify'),
+    var thunkify = require('fora-node-thunkify'),
         path = require("path");
 
     var _spawn = require('child_process').spawn;
