@@ -9,7 +9,8 @@
     },
     "dependencies": {
         "co": "*",
-        "fora-node-thunkify": "*"
+        "fora-node-thunkify": "*",
+		"fora-co-tools": "*"
     },
     "devDependencies": {
         "mocha": "*",
