@@ -9,9 +9,14 @@
         var options = options || {};
         return function(proc, args) {
             var script = _spawn(proc, args);
-            if (options.log) {
+            if (options.stdout) {
                 script.stdout.on('data', function (data) {
-                    options.log(data);
+                    options.stdout(data);
+                });
+            }
+            if (options.stderr) {
+                script.stderr.on('data', function (data) {
+                    options.stderr(data);
                 });
             }
             return script;
