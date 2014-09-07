@@ -7,8 +7,8 @@
     var _spawn = require('child_process').spawn;
     var spawn = function(options) {
         var options = options || {};
-        return function(proc, args) {
-            var script = _spawn(proc, args);
+        return function(proc, args, _options) {
+            var script = _spawn(proc, args, _options);
             if (options.stdout) {
                 script.stdout.on('data', function (data) {
                     options.stdout(data);
