@@ -1,6 +1,8 @@
 (function () {
     "use strict";
 
+    var _;
+
     var Job = require('./job'),
         Watch = require('./watch'),
         JobRunner = require('./jobrunner');

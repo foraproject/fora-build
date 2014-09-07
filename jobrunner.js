@@ -1,6 +1,8 @@
 (function () {
     "use strict";
 
+    var _;
+    
     var Job = require('./job'),
         coTools = require('fora-co-tools')(ENABLE_DEBUG_MODE);
 

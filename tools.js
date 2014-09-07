@@ -1,6 +1,8 @@
 (function () {
     "use strict";
 
+    var _;
+    
     var thunkify = require('fora-node-thunkify'),
         path = require("path");
 

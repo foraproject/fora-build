@@ -1,5 +1,5 @@
 (function() {
-    "use strict"
+    "use strict";
 
     var Build = require('./build');
     var tools = require('./tools');
