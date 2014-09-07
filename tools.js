@@ -15,7 +15,7 @@
                 });
             } else {
                 script.stdout.on('data', function (data) {
-                    process.stdout(data);
+                    process.stdout.write(data);
                 });
             }
             if (options.stderr) {
@@ -24,7 +24,7 @@
                 });
             } else {
                 script.stderr.on('data', function (data) {
-                    process.stderr(data);
+                    process.stderr.write(data);
                 });
             }
             return script;
