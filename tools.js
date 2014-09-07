@@ -13,10 +13,18 @@
                 script.stdout.on('data', function (data) {
                     options.stdout(data);
                 });
+            } else {
+                script.stdout.on('data', function (data) {
+                    process.stdout(data);
+                });
             }
             if (options.stderr) {
                 script.stderr.on('data', function (data) {
                     options.stderr(data);
+                });
+            } else {
+                script.stderr.on('data', function (data) {
+                    process.stderr(data);
                 });
             }
             return script;
