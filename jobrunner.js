@@ -58,41 +58,41 @@
                     }
             }
             return true;
-        }
+        };
 
         //Do the do.
         var next = function*() {
             // Signal all jobs that can run
-            var fn;
+            var fn, jobData;
             var signaled = jobList.filter(isSignaled);
-            for(var i = 0; i < signaled.length; i++) {
+            for(let i = 0; i < signaled.length; i++) {
                 if (typeof(signaled[i].tasks) === "undefined" && !signaled[i].isStarting) {
                     signaled[i].isStarting = true;
-                    signaled[i].tasks = yield* signaled[i].job.getTasks();;
+                    signaled[i].tasks = yield* signaled[i].job.getTasks();
                     signaled[i].total = signaled[i].tasks.length;
                     signaled[i].isStarting = false;
                 }
             }
 
-            for(var i = 0; i < signaled.length; i++) {
+            for(let i = 0; i < signaled.length; i++) {
                 if (signaled[i].tasks && signaled[i].tasks.length) {
                     fn = signaled[i].tasks.shift();
-                    var jobData = signaled[i];
+                    jobData = signaled[i];
                     break;
                 }
             }
 
             if (fn) {
                 activeThreads++;
-                yield* fn();
+                _ = yield* fn();
                 activeThreads--;
                 jobData.completed++;
 
                 //Now that this work item has completed, it is time to queue more.
                 var scheduled = scheduler();
-                yield* coTools.parallel(scheduled);
+                _ = yield* coTools.parallel(scheduled);
             }
-        }
+        };
 
         // Create a number of parallel jobs, equal to unused threads.
         var scheduler = function() {
@@ -101,7 +101,7 @@
             if (threads > 0)
                 while (threads--) gens.push(next);
             return gens;
-        }
+        };
 
         //In single job mode, build the list of dependencies
         if (singleJob) {
@@ -123,14 +123,14 @@
 
                     //Also add dependencies for the job
                     var deps = self.jobs.filter(function(t) {
-                        return job.deps.indexOf(t.name) > -1
+                        return job.deps.indexOf(t.name) > -1;
                     });
                     //....recursively, of course.
                     deps.forEach(function(dep) {
                         addToJobList(dep, jobList);
                     });
                 }
-            }
+            };
             addToJobList(singleJob, jobList);
         }
         //Otherwise, you can run everything
@@ -146,10 +146,10 @@
 
         //Queue initial work items
         var scheduled = scheduler();
-        yield* coTools.parallel(scheduled);
+        _ = yield* coTools.parallel(scheduled);
 
         this.isRunning = false;
-    }
+    };
 
     module.exports = JobRunner;
 

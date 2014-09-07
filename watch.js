@@ -60,10 +60,10 @@
                 }
             }
             return results;
-        }
+        };
 
 
-        var dirWalkers = []
+        var dirWalkers = [];
 
         for (var i = 0; i < this.patterns.length; i++) {
             dirWalkers.push(walk(this.patterns[i].dir, this.patterns[i].recurse));
@@ -77,9 +77,9 @@
                 if (entry.type === "dir") {
                     self.watchedDirs.push(entry.path);
                 } else if (entry.type === 'file') {
-                    if (self.patterns.filter(function(p) { return p.regex.test(entry.path) }).length) {
+                    if (self.patterns.filter(function(p) { return p.regex.test(entry.path); }).length) {
                         yieldables.push(function*() {
-                            yield* self.fn.call(self.parent, entry.path, "change");
+                            _ = yield* self.fn.call(self.parent, entry.path, "change");
                         });
                         self.watchedFiles.push(entry.path);
                     }

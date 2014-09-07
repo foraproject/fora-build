@@ -6,7 +6,7 @@
 
     var _spawn = require('child_process').spawn;
     var spawn = function(options) {
-        var options = options || {};
+        options = options || {};
         return function(proc, args, _options) {
             var script = _spawn(proc, args, _options);
             if (options.stdout) {
@@ -28,12 +28,12 @@
                 });
             }
             return script;
-        }
-    }
+        };
+    };
 
-    var _exec = require('child_process').exec
+    var _exec = require('child_process').exec;
     var exec = function(options) {
-        var options = options || {};
+        options = options || {};
         return thunkify(function(cmd, cb) {
             if (options.log)
                 options.log(cmd);
@@ -41,19 +41,19 @@
                 cb(err, stdout.substring(0, stdout.length - 1));
             });
         });
-    }
+    };
 
     var fs = require('fs');
     var ensureDirExists = function(options) {
-        var options = options || {};
+        options = options || {};
         var fnExec = exec();
         return function*(file) {
             var dir = path.dirname(file);
             if (!fs.existsSync(dir)) {
-                yield* fnExec("mkdir -p " + dir);
+                _ = yield* fnExec("mkdir -p " + dir);
             }
-        }
-    }
+        };
+    };
 
     module.exports = {
         fs: {
@@ -63,6 +63,6 @@
             exec: exec,
             spawn: spawn
         }
-    }
+    };
 
 })();

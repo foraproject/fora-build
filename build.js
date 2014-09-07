@@ -1,6 +1,8 @@
 (function () {
     "use strict";
 
+    var _;
+
     var co = require('co'),
         thunkify = require('fora-node-thunkify'),
         fs = require('fs'),
@@ -19,7 +21,7 @@
 
         this.options = options || {};
         this.options.threads = this.options.threads || 4;
-    }
+    };
 
     Build.prototype = Object.create(JobQueue.prototype);
     Build.prototype.constructor = Build;
@@ -30,7 +32,7 @@
         this.configs.push(configuration);
         fn.call(configuration);
         return configuration;
-    }
+    };
 
 
     Build.prototype.start = function(monitor, cb) {
@@ -46,27 +48,27 @@
                 new Job(function*() {
                     for (var i = 0; i < self.configs.length; i++) {
                         self.configs[i].state = {};
-                        yield* self.configs[i].runJobs();
+                        _ = yield* self.configs[i].runJobs();
                     }
                 })
             );
 
-            yield* self.runJobs();
+            _ = yield* self.runJobs();
 
             if (cb) cb();
 
             if (monitor)
-                yield* self.startMonitoring();
+                _ = yield* self.startMonitoring();
 
         })();
-    }
+    };
 
 
     var sleep = function(ms) {
         return function (cb) {
             setTimeout(cb, ms);
         };
-    }
+    };
 
     Build.prototype.startMonitoring = function*() {
         var self = this;
@@ -75,7 +77,7 @@
         this.monitoring = true;
 
         var onFileChange = function(ev, filePath, watcher, job, config) {
-            var matches = fileChangeEvents.concat(processedCycle).filter(function(c) { return c.filePath === filePath && c.config === config });
+            var matches = fileChangeEvents.concat(processedCycle).filter(function(c) { return c.filePath === filePath && c.config === config; });
             if (!matches.length)
                 fileChangeEvents.push({ ev: ev, filePath: filePath, watcher: watcher, job: job, config: config });
         };
@@ -105,7 +107,7 @@
                     //Push this to the list of files we won't monitor in this cycle.
                     processedCycle.push({ filePath: changeNotification.filePath, config: changeNotification.config });
 
-                    yield* changeNotification.job.fn.call(changeNotification.config, changeNotification.filePath, "change");
+                    _ = yield* changeNotification.job.fn.call(changeNotification.config, changeNotification.filePath, "change");
 
                     //Remove the event. We have processed it.
                     fileChangeEvents.shift();
@@ -123,15 +125,15 @@
 
             for (var i = 0; i < self.configs.length; i++) {
                 if (self.configs[i].queuedJobs.length)
-                    yield* self.configs[i].runQueuedJobs();
+                    _ = yield* self.configs[i].runQueuedJobs();
             }
 
             if (this.queuedJobs.length)
-                yield* this.runQueuedJobs();
+                _ = yield* this.runQueuedJobs();
 
             yield sleep(1000);
         }
-    }
+    };
 
     module.exports = Build;
 }());
