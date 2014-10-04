@@ -123,9 +123,12 @@
                 process.chdir(this.root);
             }
 
-            for (var i = 0; i < self.configs.length; i++) {
-                if (self.configs[i].queuedJobs.length)
-                    _ = yield* self.configs[i].runQueuedJobs();
+            for (var i = 0; i < this.configs.length; i++) {
+                if (this.configs[i].queuedJobs.length) {
+                    process.chdir(this.configs[i].root);
+                    _ = yield* this.configs[i].runQueuedJobs();
+                    process.chdir(this.root);
+                }
             }
 
             if (this.queuedJobs.length)
