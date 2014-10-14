@@ -2,7 +2,7 @@
     "use strict";
 
     var _;
-    
+
     var Job = require('./job'),
         coTools = require('fora-co-tools')(ENABLE_DEBUG_MODE);
 
@@ -48,17 +48,16 @@
                 return false;
 
             //Not done yet.
-            for (var i = 0; i < jobData.job.deps.length; i++) {
+            jobData.job.deps.forEach(function(dep) {
                 var matches = jobList.filter(function(r) {
-                    return r.job.name === jobData.job.deps[i];
+                    return r.job.name === dep;
                 });
                 if (!matches.length)
-                    throw new Error("Cannot find dependent job " + jobData.job.deps[i] + " for job " + jobData.job.name);
+                    throw new Error("Cannot find dependent job " + dep + " for job " + jobData.job.name);
                 else
-                    if ((typeof matches[0].tasks === "undefined") || (matches[0].total > matches[0].completed)) {
+                    if ((typeof matches[0].tasks === "undefined") || (matches[0].total > matches[0].completed))
                         return false;
-                    }
-            }
+            });
             return true;
         };
 

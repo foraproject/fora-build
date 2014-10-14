@@ -1,22 +1,30 @@
 {
-    "author": "Jeswin Kumar <jeswinpk@agilehead.com>",
-    "name": "fora-build",
-    "version": "0.6.6",
-    "description": "Fora's Build System.",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/jeswin/fora-build.git"
-    },
-    "dependencies": {
-        "co": "*",
-        "fora-node-thunkify": "*",
-		"fora-co-tools": "*"
-    },
-    "devDependencies": {
-        "mocha": "*",
-        "should": "*"
-    },
-    "engines": { "node": ">= 0.11.9" },
-    "keywords": ["build", "tasks"],
-    "license" : "GPL-3.0+"
+  "author": {
+    "name": "Jeswin Kumar",
+    "email": "jeswinpk@agilehead.com"
+  },
+  "name": "fora-build",
+  "version": "0.9.10",
+  "description": "Fora's Build System.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeswin/fora-build.git"
+  },
+  "dependencies": {
+    "co": "*",
+    "fora-node-thunkify": "*",
+    "fora-co-tools": "*"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "should": "*"
+  },
+  "engines": {
+    "node": ">= 0.11.9"
+  },
+  "keywords": [
+    "build",
+    "tasks"
+  ],
+  "license": "GPL-3.0+"
 }

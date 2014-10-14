@@ -40,12 +40,20 @@
     };
 
 
-    JobQueue.prototype.queue = function(fn) {
-        var matches = this.queuedJobs.filter(function(f) {
-            return f.fn === fn;
+    JobQueue.prototype.dequeue = function(fn) {
+        this.queuedJobs = this.queuedJobs.filter(function(f) {
+            return f.fn !== fn;
         });
-        if (!matches.length)
-            this.queuedJobs.push({ fn: fn });
+    };
+
+
+    JobQueue.prototype.queue = function(fn, allowDuplicates) {
+        if (!allowDuplicates) {
+            this.queuedJobs = this.queuedJobs.filter(function(f) {
+                return f.fn !== fn;
+            });
+        }
+        this.queuedJobs.push({ fn: fn });
     };
 
 
