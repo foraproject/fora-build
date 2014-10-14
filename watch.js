@@ -2,7 +2,7 @@
     "use strict";
 
     var _;
-    
+
     var fs = require('fs'),
         path = require('path'),
         thunkify = require('fora-node-thunkify'),
@@ -48,7 +48,14 @@
         var walk = function*(dir, recurse) {
             var results = [];
 
-            var files = yield* readdir(dir);
+            var files = [];
+            try {
+                files = yield* readdir(dir);
+            }
+            catch(ex) {
+                console.log("Skipped reading " + dir)
+            }
+
             for (var i = 0; i < files.length; i++) {
                 var fullPath = path.join(dir, files[i]);
                 var info = yield* stat(fullPath);

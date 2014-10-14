@@ -4,7 +4,7 @@
     "email": "jeswinpk@agilehead.com"
   },
   "name": "fora-build",
-  "version": "0.9.10",
+  "version": "0.9.12",
   "description": "Fora's Build System.",
   "repository": {
     "type": "git",

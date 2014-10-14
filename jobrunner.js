@@ -48,7 +48,8 @@
                 return false;
 
             //Not done yet.
-            jobData.job.deps.forEach(function(dep) {
+            for (var i = 0; i < jobData.job.deps.length; i++) {
+                var dep = jobData.job.deps[i];
                 var matches = jobList.filter(function(r) {
                     return r.job.name === dep;
                 });
@@ -57,7 +58,7 @@
                 else
                     if ((typeof matches[0].tasks === "undefined") || (matches[0].total > matches[0].completed))
                         return false;
-            });
+            }
             return true;
         };
 
