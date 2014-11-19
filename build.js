@@ -60,7 +60,7 @@
             if (monitor)
                 _ = yield* self.startMonitoring();
 
-        })();
+        });
     };
 
 
