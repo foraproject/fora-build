@@ -52,7 +52,7 @@ buildConfig = function() {
         if (!fs.existsSync(dir)) {
             yield* exec("mkdir " + dir + " -p");
         }
-    }
+    };
 
 
     /*
@@ -83,6 +83,6 @@ buildConfig = function() {
         console.log("Restarting the fake server .... done");
         //yield* exec("restart.sh"); //.. for example
     }, "fake_server_restart");
-}
+};
 
 module.exports = buildConfig;

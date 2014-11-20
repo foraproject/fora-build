@@ -1,8 +1,6 @@
 (function () {
     "use strict";
 
-    var _;
-    
     var thunkify = require('fora-node-thunkify'),
         path = require("path");
 
@@ -52,7 +50,7 @@
         return function*(file) {
             var dir = path.dirname(file);
             if (!fs.existsSync(dir)) {
-                _ = yield* fnExec("mkdir -p " + dir);
+                yield* fnExec("mkdir -p " + dir);
             }
         };
     };

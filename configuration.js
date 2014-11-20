@@ -1,8 +1,6 @@
 (function () {
     "use strict";
 
-    var _;
-
     var JobQueue = require('./jobqueue'),
         Watch = require('./watch'),
         fs = require('fs'),

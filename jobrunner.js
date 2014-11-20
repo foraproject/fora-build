@@ -1,8 +1,6 @@
 (function () {
     "use strict";
 
-    var _;
-
     var Job = require('./job'),
         coTools = require('fora-co-tools')(ENABLE_DEBUG_MODE);
 
@@ -86,13 +84,13 @@
 
             if (fn) {
                 activeThreads++;
-                _ = yield* fn();
+                yield* fn();
                 activeThreads--;
                 jobData.completed++;
 
                 //Now that this work item has completed, it is time to queue more.
                 var scheduled = scheduler();
-                _ = yield* coTools.parallel(scheduled);
+                yield* coTools.parallel(scheduled);
             }
         };
 
@@ -148,7 +146,7 @@
 
         //Queue initial work items
         var scheduled = scheduler();
-        _ = yield* coTools.parallel(scheduled);
+        yield* coTools.parallel(scheduled);
 
         this.isRunning = false;
     };

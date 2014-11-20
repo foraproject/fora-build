@@ -1,8 +1,6 @@
 (function () {
     "use strict";
 
-    var _;
-
     var fs = require('fs'),
         path = require('path'),
         thunkify = require('fora-node-thunkify'),
@@ -88,7 +86,7 @@
                 } else if (entry.type === 'file') {
                     if (self.patterns.filter(function(p) { return p.regex.test(entry.path); }).length) {
                         yieldables.push(function*() {
-                            _ = yield* self.fn.call(self.parent, entry.path, "change");
+                            yield* self.fn.call(self.parent, entry.path, "change");
                         });
                         self.watchedFiles.push(entry.path);
                     }

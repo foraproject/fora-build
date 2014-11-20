@@ -1,8 +1,6 @@
 (function () {
     "use strict";
 
-    var _;
-
     var Job = function(fn, name, deps, parent, options) {
         this.fn = fn;
         this.name = name || "undefined";
@@ -18,7 +16,7 @@
 
     Job.prototype.getTasks = function*() {
         var self = this;
-        return [function*() { _ = yield* self.fn.call(self.parent); }];
+        return [function*() { yield* self.fn.call(self.parent); }];
     };
 
     module.exports = Job;

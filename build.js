@@ -1,8 +1,6 @@
 (function () {
     "use strict";
 
-    var _;
-
     var co = require('co'),
         thunkify = require('fora-node-thunkify'),
         fs = require('fs'),
@@ -48,19 +46,19 @@
                 new Job(function*() {
                     for (var i = 0; i < self.configs.length; i++) {
                         self.configs[i].state = {};
-                        _ = yield* self.configs[i].runJobs();
+                        yield* self.configs[i].runJobs();
                     }
                 })
             );
 
-            _ = yield* self.runJobs();
+            yield* self.runJobs();
 
             if (cb) cb();
 
             if (monitor)
-                _ = yield* self.startMonitoring();
+                yield* self.startMonitoring();
 
-        });
+        }).then(null, function(err) { console.log(err); });
     };
 
 
@@ -107,7 +105,7 @@
                     //Push this to the list of files we won't monitor in this cycle.
                     processedCycle.push({ filePath: changeNotification.filePath, config: changeNotification.config });
 
-                    _ = yield* changeNotification.job.fn.call(changeNotification.config, changeNotification.filePath, "change");
+                    yield* changeNotification.job.fn.call(changeNotification.config, changeNotification.filePath, "change");
 
                     //Remove the event. We have processed it.
                     fileChangeEvents.shift();
@@ -126,13 +124,13 @@
             for (var i = 0; i < this.configs.length; i++) {
                 if (this.configs[i].queuedJobs.length) {
                     process.chdir(this.configs[i].root);
-                    _ = yield* this.configs[i].runQueuedJobs();
+                    yield* this.configs[i].runQueuedJobs();
                     process.chdir(this.root);
                 }
             }
 
             if (this.queuedJobs.length)
-                _ = yield* this.runQueuedJobs();
+                yield* this.runQueuedJobs();
 
             yield sleep(1000);
         }

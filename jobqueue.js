@@ -1,8 +1,6 @@
 (function () {
     "use strict";
 
-    var _;
-
     var Job = require('./job'),
         Watch = require('./watch'),
         JobRunner = require('./jobrunner');
@@ -59,7 +57,7 @@
 
     JobQueue.prototype.run = function*(fn, name, deps, parent, options) {
         var runner = new JobRunner(this.jobs, { threads: this.build.options.threads });
-        _ = yield* runner.run(fn, name, deps, parent, options);
+        yield* runner.run(fn, name, deps, parent, options);
     };
 
 
@@ -67,7 +65,7 @@
         while (this.queuedJobs.length) {
             var job  = this.queuedJobs.shift();
             var runner = new JobRunner(this.jobs, { threads: this.build.options.threads });
-            _ = yield* runner.run(job.fn);
+            yield* runner.run(job.fn);
         }
     };
 
@@ -80,15 +78,15 @@
         var options = { threads: this.build.options.threads };
 
         var startRunner = new JobRunner(this.onStartJobs, options);
-        _ = yield* startRunner.run();
+        yield* startRunner.run();
 
         var jobRunner = new JobRunner(this.activeJobs, options);
-        _ = yield* jobRunner.run();
+        yield* jobRunner.run();
 
         var completionRunner = new JobRunner(this.onCompleteJobs, options);
-        _ = yield* completionRunner.run();
+        yield* completionRunner.run();
 
-        _ = yield* this.runQueuedJobs();
+        yield* this.runQueuedJobs();
 
         process.chdir(this.build.root);
     };
